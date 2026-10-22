@@ -1,0 +1,30 @@
+# Ambiente virtual e dependências locais
+.venv/
+venv/
+**/.venv/
+**/venv/
+apiario-rocha-backend-py311/
+apiario-rocha-backend/.venv/
+apiario-rocha-backend/venv311/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Arquivos locais e temporários
+*.log
+*.tmp
+status.txt
+test_output.txt
+.env
+.env.*
+
+# Sistema
+.DS_Store
+Thumbs.db
