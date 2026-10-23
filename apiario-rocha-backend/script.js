@@ -1,5 +1,7 @@
-const API_BASE = 'http://127.0.0.1:8000/api/v1';
+const API_BASE = `${window.location.origin}/api/v1`;
 const responseMessage = document.getElementById('responseMessage');
+let adminTokenPromise = null;
+let resolveAdminToken = null;
 const defaultBrandConfig = {
   companyName: 'Empresa Exemplo',
   companyAcronym: 'EE',
@@ -34,6 +36,7 @@ const collectionCache = {
   fornecedor: [],
   venda: [],
   estoque: [],
+  produto: [],
 };
 const tableState = {
   usuario: { sortKey: 'nome', sortDirection: 1, page: 1, pageSize: 5 },
@@ -43,6 +46,7 @@ const tableState = {
   fornecedor: { sortKey: 'nome', sortDirection: 1, page: 1, pageSize: 5 },
   venda: { sortKey: 'data_venda', sortDirection: -1, page: 1, pageSize: 5 },
   estoque: { sortKey: 'produto', sortDirection: 1, page: 1, pageSize: 5 },
+  produto: { sortKey: 'nome', sortDirection: 1, page: 1, pageSize: 5 },
 };
 
 const entityConfig = {
@@ -296,26 +300,103 @@ const entityConfig = {
       form.unidade.value = item.unidade || 'unidade';
     },
   },
+  produto: {
+    listKey: 'produtos',
+    itemIdKey: '_id',
+    listEndpoint: '/produtos',
+    createEndpoint: '/produtos/cadastrar',
+    updateEndpoint: '/produtos',
+    buttonLabel: 'Produto',
+    emptyText: 'Nenhum produto cadastrado.',
+    formId: 'produtoForm',
+    exportFields: ['codigo', 'nome', 'categoria', 'descricao', 'preco', 'unidade', 'ativo'],
+    mapper: (formData) => ({
+      codigo: optionalValue(formData.get('codigo')),
+      nome: formData.get('nome'),
+      categoria: formData.get('categoria') || 'geral',
+      descricao: optionalValue(formData.get('descricao')),
+      preco: formData.get('preco') === '' ? undefined : Number(formData.get('preco')),
+      unidade: formData.get('unidade') || 'unidade',
+      ativo: formData.get('ativo') === 'true',
+    }),
+    render: (item) => [
+      item.codigo || '-',
+      item.nome || '-',
+      item.categoria || '-',
+      item.descricao || '-',
+      item.preco !== undefined ? `R$ ${Number(item.preco).toFixed(2)}` : '-',
+      item.unidade || '-',
+      item.ativo ? 'Ativo' : 'Inativo',
+      `<div class="table-actions"><button class="table-action edit" data-kind="produto" data-id="${item._id || item.id}">Editar</button><button class="table-action delete" data-kind="produto" data-id="${item._id || item.id}">Excluir</button></div>`,
+    ],
+    populateForm: (form, item) => {
+      form.codigo.value = item.codigo || '';
+      form.nome.value = item.nome || '';
+      form.categoria.value = item.categoria || 'geral';
+      form.descricao.value = item.descricao || '';
+      form.preco.value = item.preco ?? '';
+      form.unidade.value = item.unidade || 'unidade';
+      form.ativo.value = item.ativo ? 'true' : 'false';
+    },
+  },
 };
 
-async function getAdminToken() {
+function getAdminToken() {
   const token = localStorage.getItem('api_token');
   if (token) return token;
 
-  const loginResponse = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
-  });
-
-  if (!loginResponse.ok) {
-    throw new Error('Não foi possível autenticar o administrador de demonstração.');
+  if (!adminTokenPromise) {
+    const loginDialog = document.getElementById('loginDialog');
+    if (!loginDialog || !document.getElementById('loginForm')) {
+      throw new Error('O formulário de autenticação não está disponível.');
+    }
+    adminTokenPromise = new Promise((resolve) => {
+      resolveAdminToken = resolve;
+    });
+    loginDialog.showModal();
   }
 
-  const data = await loginResponse.json();
-  localStorage.setItem('api_token', data.access_token);
-  return data.access_token;
+  return adminTokenPromise;
 }
+
+document.getElementById('loginForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const errorMessage = document.getElementById('loginError');
+  submitButton.disabled = true;
+  errorMessage.textContent = '';
+
+  try {
+    const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: form.elements.username.value,
+        password: form.elements.password.value,
+      }),
+    });
+    const payload = await loginResponse.json().catch(() => null);
+    if (!loginResponse.ok) {
+      throw new Error(formatRequestError(payload));
+    }
+    if (typeof payload?.access_token !== 'string' || !payload.access_token) {
+      throw new Error('A API não retornou um token de acesso válido.');
+    }
+
+    localStorage.setItem('api_token', payload.access_token);
+    form.reset();
+    document.getElementById('loginDialog').close();
+    const resolveToken = resolveAdminToken;
+    resolveAdminToken = null;
+    adminTokenPromise = null;
+    if (resolveToken) resolveToken(payload.access_token);
+  } catch (error) {
+    errorMessage.textContent = error.message || 'Não foi possível autenticar.';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
 
 function getStoredBrandConfig() {
   try {
@@ -523,6 +604,39 @@ function showMessage(message, type = 'success') {
   responseMessage.classList.toggle('error', type === 'error');
 }
 
+function formatRequestError(payload) {
+  const detail = payload?.detail;
+  if (Array.isArray(detail)) {
+    const fieldLabels = {
+      nome: 'Nome',
+      email: 'E-mail',
+      username: 'Usuário',
+      password: 'Senha',
+      perfil: 'Perfil',
+    };
+
+    return detail.map((issue) => {
+      const field = Array.isArray(issue.loc)
+        ? issue.loc.filter((part) => part !== 'body').join('.')
+        : '';
+      const label = fieldLabels[field] || field;
+
+      if (issue.type === 'string_too_short' && Number.isInteger(issue.ctx?.min_length)) {
+        return `${label}: deve ter pelo menos ${issue.ctx.min_length} caracteres.`;
+      }
+      if (issue.type === 'missing') {
+        return `${label || 'Campo'}: preenchimento obrigatório.`;
+      }
+
+      return label ? `${label}: ${issue.msg || 'valor inválido.'}` : issue.msg || 'Dados inválidos.';
+    }).join(' ');
+  }
+
+  return typeof detail === 'string'
+    ? detail
+    : payload?.message || 'Erro de comunicação com a API.';
+}
+
 async function requestJson(endpoint, method = 'GET', body = null) {
   const token = await getAdminToken();
   const options = {
@@ -537,11 +651,19 @@ async function requestJson(endpoint, method = 'GET', body = null) {
     options.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, options);
+  let response = await fetch(`${API_BASE}${endpoint}`, options);
+  if (response.status === 401) {
+    if (localStorage.getItem('api_token') === token) {
+      localStorage.removeItem('api_token');
+    }
+    const refreshedToken = await getAdminToken();
+    options.headers.Authorization = `Bearer ${refreshedToken}`;
+    response = await fetch(`${API_BASE}${endpoint}`, options);
+  }
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.detail || payload?.message || 'Erro de comunicação com a API.');
+    throw new Error(formatRequestError(payload));
   }
 
   return payload;
@@ -697,11 +819,22 @@ async function updateOperationalMetrics() {
     const totalClientes = Number(summary.total_clientes || 0);
     const totalFornecedores = Number(summary.total_fornecedores || 0);
     const estoqueTotal = Number(summary.estoque_total || 0);
+    const totalColmeiasAtivas = Number(summary.total_colmeias_ativas || 0);
+    const totalLotes = Number(summary.total_lotes || 0);
+    const totalLeiturasTelemetria = Number(summary.total_leituras_telemetria || 0);
 
+    const dashboardStatus = document.getElementById('dashboardStatus');
     const salesCountMetric = document.getElementById('salesCountMetric');
     const fundoAcumuladoMetric = document.getElementById('fundoAcumuladoMetric');
     const employeesCountMetric = document.getElementById('employeesCountMetric');
     const monthlyRevenueMetric = document.getElementById('monthlyRevenueMetric');
+    const activeColmeiasMetric = document.getElementById('activeColmeiasMetric');
+    const lotesCountMetric = document.getElementById('lotesCountMetric');
+    const telemetryCountMetric = document.getElementById('telemetryCountMetric');
+    const dashboardFundMetric = document.getElementById('dashboardFundMetric');
+    const dashboardActiveColmeias = document.getElementById('dashboardActiveColmeias');
+    const dashboardLotesCount = document.getElementById('dashboardLotesCount');
+    const dashboardLastUpdated = document.getElementById('dashboardLastUpdated');
     const reportSalesCount = document.getElementById('reportSalesCount');
     const reportFundoAcumulado = document.getElementById('reportFundoAcumulado');
     const reportFuncionarios = document.getElementById('reportFuncionarios');
@@ -715,6 +848,20 @@ async function updateOperationalMetrics() {
     if (fundoAcumuladoMetric) fundoAcumuladoMetric.textContent = moneyFormatter.format(fundoAcumulado);
     if (employeesCountMetric) employeesCountMetric.textContent = String(totalFuncionarios);
     if (monthlyRevenueMetric) monthlyRevenueMetric.textContent = moneyFormatter.format(faturamentoMes);
+    if (activeColmeiasMetric) activeColmeiasMetric.textContent = String(totalColmeiasAtivas);
+    if (lotesCountMetric) lotesCountMetric.textContent = String(totalLotes);
+    if (telemetryCountMetric) telemetryCountMetric.textContent = String(totalLeiturasTelemetria);
+    if (dashboardFundMetric) dashboardFundMetric.textContent = moneyFormatter.format(fundoAcumulado);
+    if (dashboardActiveColmeias) dashboardActiveColmeias.textContent = String(totalColmeiasAtivas);
+    if (dashboardLotesCount) dashboardLotesCount.textContent = String(totalLotes);
+    if (dashboardLastUpdated) {
+      dashboardLastUpdated.textContent = new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }).format(new Date());
+    }
+    if (dashboardStatus) dashboardStatus.textContent = 'Atualizado';
+    renderSalesChart(collectionCache.venda);
 
     if (reportSalesCount) reportSalesCount.textContent = String(totalVendas);
     if (reportFundoAcumulado) reportFundoAcumulado.textContent = moneyFormatter.format(fundoAcumulado);
@@ -744,16 +891,57 @@ async function updateOperationalMetrics() {
       const fundoAcumuladoMetric = document.getElementById('fundoAcumuladoMetric');
       const employeesCountMetric = document.getElementById('employeesCountMetric');
       const monthlyRevenueMetric = document.getElementById('monthlyRevenueMetric');
+      const dashboardStatus = document.getElementById('dashboardStatus');
       const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
       if (salesCountMetric) salesCountMetric.textContent = String(totalVendas);
       if (fundoAcumuladoMetric) fundoAcumuladoMetric.textContent = moneyFormatter.format(fundoAcumulado);
       if (employeesCountMetric) employeesCountMetric.textContent = String(totalFuncionarios);
       if (monthlyRevenueMetric) monthlyRevenueMetric.textContent = moneyFormatter.format(faturamentoMes);
+      if (dashboardStatus) dashboardStatus.textContent = 'Parcial';
+      renderSalesChart(vendas);
     } catch (fallbackError) {
+      const dashboardStatus = document.getElementById('dashboardStatus');
+      if (dashboardStatus) dashboardStatus.textContent = 'Indisponível';
       showMessage('A API de resumo operacional não respondeu no momento.', 'error');
     }
   }
+}
+
+function renderSalesChart(vendas) {
+  const chart = document.getElementById('salesChart');
+  if (!chart) return;
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(today);
+    day.setUTCDate(today.getUTCDate() - (6 - index));
+    return day.toISOString().slice(0, 10);
+  });
+  const totalsByDay = new Map(days.map((day) => [day, 0]));
+
+  (Array.isArray(vendas) ? vendas : []).forEach((venda) => {
+    const day = String(venda.data_venda || '').slice(0, 10);
+    if (totalsByDay.has(day)) {
+      totalsByDay.set(day, totalsByDay.get(day) + Number(venda.valor_bruto || 0));
+    }
+  });
+
+  const maxTotal = Math.max(...totalsByDay.values());
+  if (maxTotal === 0) {
+    chart.innerHTML = '<p class="chart-empty">Sem vendas nos últimos sete dias.</p>';
+    return;
+  }
+
+  const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  chart.innerHTML = days.map((day) => {
+    const total = totalsByDay.get(day);
+    const height = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+    const label = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
+      .format(new Date(`${day}T00:00:00Z`));
+    return `<span style="--bar-height: ${height}%" title="${label}: ${moneyFormatter.format(total)}"></span>`;
+  }).join('');
 }
 
 async function atualizarAlertasEstoque() {
@@ -791,6 +979,7 @@ async function refreshCollections() {
       fetchCollection('fornecedor'),
       fetchCollection('venda'),
       fetchCollection('estoque'),
+      fetchCollection('produto'),
     ]);
     renderAllCollections();
     await Promise.all([
@@ -798,6 +987,8 @@ async function refreshCollections() {
       atualizarAlertasEstoque(),
     ]);
   } catch (error) {
+    const dashboardStatus = document.getElementById('dashboardStatus');
+    if (dashboardStatus) dashboardStatus.textContent = 'Indisponível';
     showMessage(error.message || 'Não foi possível atualizar os registros.', 'error');
   }
 }
@@ -893,6 +1084,7 @@ document.getElementById('newRegisterBtn')?.addEventListener('click', () => {
     fornecedores: 'fornecedores',
     vendas: 'vendas',
     estoque: 'estoque',
+    produtos: 'produtos',
     financeiro: 'financeiro',
     colmeias: 'colmeias',
     lotes: 'lotes',
@@ -910,6 +1102,7 @@ document.getElementById('newRegisterBtn')?.addEventListener('click', () => {
     fornecedores: 'fornecedorForm',
     vendas: 'vendaForm',
     estoque: 'estoqueForm',
+    produtos: 'produtoForm',
   };
 
   showScreen(targetScreen);
@@ -986,6 +1179,7 @@ document.addEventListener('click', async (event) => {
       fornecedor: 'fornecedorForm',
       venda: 'vendaForm',
       estoque: 'estoqueForm',
+      produto: 'produtoForm',
     };
 
     const form = document.getElementById(formIdByKind[kind] || 'usuarioForm');
@@ -993,6 +1187,7 @@ document.addEventListener('click', async (event) => {
     fillFormForEdit(form, item);
     showScreen(
       kind === 'estoque' ? 'estoque' :
+      kind === 'produto' ? 'produtos' :
       kind === 'venda' ? 'vendas' :
       kind === 'funcionario' ? 'funcionarios' :
       kind === 'administrador' ? 'administradores' :

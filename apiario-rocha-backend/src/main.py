@@ -4,9 +4,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 
-from src.config.database import ping_database
+from src.config.database import database
 from src.config.settings import get_settings
 from src.routes.administradores import router as administradores_router
 from src.routes.auth import router as auth_router
@@ -18,10 +17,11 @@ from src.routes.financeiro import router as financeiro_router
 from src.routes.fornecedores import router as fornecedores_router
 from src.routes.funcionarios import router as funcionarios_router
 from src.routes.lotes import router as lotes_router
+from src.routes.produtos import router as produtos_router
 from src.routes.rastreabilidade import router as rastreabilidade_router
 from src.routes.telemetria import router as telemetria_router
 from src.routes.usuarios import router as usuarios_router
-from src.services.mongo_seed import seed_sample_data
+from src.services.sqlite_seed import seed_sample_data
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,12 +29,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    is_alive = await ping_database()
-    if is_alive:
-        print("MongoDB conectado com sucesso")
-        await seed_sample_data()
-    else:
-        print("MongoDB indisponível no momento")
+    await database.initialize()
+    print(f"SQLite conectado: {database.path}")
+    await seed_sample_data()
     yield
 
 
@@ -54,12 +51,19 @@ app.add_middleware(
 )
 
 
-app.mount("/static", StaticFiles(directory=str(BASE_DIR)), name="static")
-
-
 @app.get("/", include_in_schema=False)
 async def serve_frontend():
     return FileResponse(BASE_DIR / "index.html")
+
+
+@app.get("/static/styles.css", include_in_schema=False)
+async def serve_stylesheet():
+    return FileResponse(BASE_DIR / "styles.css", media_type="text/css")
+
+
+@app.get("/static/script.js", include_in_schema=False)
+async def serve_script():
+    return FileResponse(BASE_DIR / "script.js", media_type="text/javascript")
 
 
 @app.get("/health")
@@ -88,3 +92,4 @@ app.include_router(colmeias_router)
 app.include_router(lotes_router)
 app.include_router(financeiro_router)
 app.include_router(estoque_router)
+app.include_router(produtos_router)

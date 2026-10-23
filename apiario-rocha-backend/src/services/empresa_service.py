@@ -38,11 +38,7 @@ def salvar_empresa(payload: dict[str, Any]) -> dict[str, Any]:
 
 async def salvar_empresa_async(payload: dict[str, Any]) -> dict[str, Any]:
     normalized = _normalize_empresa(payload)
-    try:
-        await database.empresa.delete_many({})
-        await database.empresa.insert_one(normalized)
-    except Exception:
-        pass
+    await database.upsert("empresa", {"_id": "empresa", **normalized})
     _EMPRESA_CACHE.clear()
     _EMPRESA_CACHE.update(normalized)
     return dict(normalized)
@@ -53,13 +49,10 @@ def obter_empresa() -> dict[str, Any]:
 
 
 async def obter_empresa_async() -> dict[str, Any]:
-    try:
-        empresa = await database.empresa.find_one({})
-        if empresa:
-            empresa = dict(empresa)
-            if "_id" in empresa:
-                empresa.pop("_id")
-            return empresa
-    except Exception:
-        pass
+    empresa = await database.find_one("empresa", {"_id": "empresa"})
+    if empresa:
+        empresa.pop("_id", None)
+        _EMPRESA_CACHE.clear()
+        _EMPRESA_CACHE.update(empresa)
+        return empresa
     return dict(_EMPRESA_CACHE)

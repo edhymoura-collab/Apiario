@@ -1,73 +1,90 @@
 # Fase 1 — Visão Geral da Solução
 
-## 1. Contexto do projeto
-A solução Apiário Rocha 4.0 foi concebida para atender a gestão digital de um apiário com foco em:
-- monitoramento de colmeias por IoT;
-- rastreabilidade do produto até o consumidor final;
-- controle financeiro e de fundo de modernização;
-- suporte à decisão com base em dados de produção e saúde das colmeias.
+## 1. Identificação
 
-O sistema tem como objetivo centralizar dados operacionais, financeiros e de produção em uma API REST robusta e escalável, permitindo integração com sensores, dashboard interno e QR Code de rastreabilidade.
+- **Projeto:** Apiário Rocha 4.0
+- **Tipo:** aplicação web de gestão com API REST
+- **Interface:** HTML, CSS e JavaScript servidos pelo backend
+- **Backend:** Python 3.11+, FastAPI e Pydantic
+- **Persistência:** SQLite acessado com aiosqlite
+- **Documentação da API:** OpenAPI/Swagger em `/docs`
 
-## 2. Objetivo da solução
-A plataforma deve permitir:
-- receber dados de telemetria de colmeias em tempo real;
-- consultar histórico de desempenho e saúde das colmeias;
-- fornecer dados de lote e rastreabilidade para o consumidor;
-- registrar vendas e automatizar a regra de divisão financeira;
-- acompanhar o fundo de modernização para planejamento estratégico.
+## 2. Contexto e objetivo
+
+A solução centraliza informações operacionais, comerciais e financeiras de um apiário. Seu objetivo é apoiar a gestão das colmeias e da produção, manter um catálogo comercial independente do inventário, registrar clientes, fornecedores e vendas e oferecer informações públicas de rastreabilidade dos lotes.
+
+O sistema atende dois contextos de acesso:
+
+1. **Operação interna:** painel administrativo protegido por autenticação, destinado à gestão dos cadastros e às consultas operacionais.
+2. **Consulta pública:** leitura de informações de um lote auditado por código, destinada ao consumidor ou parceiro que consulta a procedência do produto.
 
 ## 3. Escopo funcional
-### 3.1 Módulo de IoT e produção
-- coleta de dados de sensores instalados nas colmeias;
-- armazenamento de peso, temperatura, umidade e nível de bateria;
-- consulta por colmeia e histórico de monitoração.
 
-### 3.2 Módulo de rastreabilidade
-- geração e consulta de lote de produção;
-- associação de dados de qualidade e pureza;
-- exposição pública de informações via QR Code.
+### 3.1 Cadastros e administração
 
-### 3.3 Módulo financeiro
-- registro de faturamento bruto;
-- cálculo automático de renda e fundo de modernização;
-- acompanhamento do saldo acumulado do fundo.
+- usuários e administradores;
+- funcionários;
+- clientes e fornecedores;
+- perfil e configurações da empresa.
 
-## 4. Usuários e perfis
-### 4.1 Usuário interno
-- gestor do apiário;
-- responsável por produção e qualidade;
-- área financeira e comercial.
+Os cadastros de usuário e administrador armazenam senha com hash scrypt. Esses registros não são, por si, as credenciais usadas no login administrativo: a autenticação do painel é configurada por variáveis de ambiente.
 
-### 4.2 Usuário externo
-- consumidor final que acessa informações via QR Code;
-- parceiros e cooperativas que consultam dados de lotes e procedência.
+### 3.2 Catálogo comercial e estoque
 
-## 5. Premissas técnicas
-- linguagem principal: Python 3.11+;
-- framework: FastAPI;
-- banco de dados: MongoDB via Motor;
-- modelos validados com Pydantic;
-- arquitetura orientada a APIs e módulos funcionais.
+- catálogo de produtos com código opcional, categoria, descrição, preço, unidade e status;
+- inventário separado, com quantidade, preço unitário, quantidade mínima e alertas;
+- registro de vendas com produto e quantidade opcionais.
 
-## 6. Regras de negócio principais
-- O sistema deve registrar telemetria com timestamp em UTC;
-- os dados financeiros devem obedecer à divisão 70/30;
-- a rota pública de QR Code deve permanecer acessível sem autenticação;
-- as rotas de escrita financeira e comercial devem exigir autenticação;
-- erros internos devem ser tratados sem expor stack trace ao cliente.
+O catálogo descreve o que pode ser vendido. O estoque controla quantas unidades estão disponíveis; cadastrar um produto não cria automaticamente um item de inventário.
 
-## 7. Entregáveis esperados da fase
-- visão clara do problema e da solução;
-- definição de escopo funcional;
-- alinhamento da arquitetura e dos usuários;
-- base para as próximas fases de requisitos e implementação.
+### 3.3 Produção, IoT e rastreabilidade
 
-## 8. Status da fase
-Status: concluída para revisão.
+- cadastro e consulta de colmeias;
+- recebimento de leituras de peso, temperatura, umidade e bateria;
+- cadastro e consulta interna de lotes;
+- consulta pública de dados de um lote auditado.
 
-> Próxima fase: requisitos funcionais e não funcionais.
+As rotas de API para colmeias, lotes, telemetria e rastreabilidade existem. Algumas dessas áreas são representadas por telas informativas no painel e não por formulários de operação completos.
 
----
+### 3.4 Vendas e finanças
 
-Se aprovar esta fase, sigo imediatamente para a criação da Fase 2 em um arquivo separado.
+- registro de vendas;
+- cálculo da divisão financeira de 70% para renda e 30% para fundo;
+- consulta do fundo acumulado;
+- consulta de resumo operacional e de relatórios.
+
+## 4. Perfis de acesso e limites atuais
+
+- O painel usa credenciais administrativas configuradas em `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
+- A API emite JWT assinado com `SECRET_KEY`, com validade configurável.
+- Rotas protegidas exigem `Authorization: Bearer <token>`.
+- A implementação valida identidade autenticada, mas ainda **não implementa autorização por papel ou permissões granulares**. Um token válido tem o mesmo nível de acesso nas rotas protegidas.
+- As rotas de telemetria e rastreabilidade pública não exigem token; seus controles e limites são detalhados na [documentação de requisitos](./02-requisitos.md).
+
+## 5. Regras de negócio principais
+
+- Leituras de telemetria são normalizadas para UTC pelo serviço.
+- Umidade da telemetria deve ficar entre 0 e 100; o peso deve ser maior que zero.
+- Apenas lotes auditados são apresentados pela rota pública de rastreabilidade.
+- O registro de venda calcula 70% para renda e 30% para fundo.
+- Produtos e estoque são entidades separadas.
+- Senhas cadastradas não são retornadas por endpoints de listagem ou atualização.
+- O arquivo `.env` contém segredos locais e não deve ser versionado.
+
+## 6. Premissas e persistência
+
+- O arquivo de banco padrão é `../data/apiario.db`, relativo à pasta do backend.
+- A API cria as tabelas na inicialização e migra para hash scrypt as senhas em texto puro encontradas nos cadastros antigos.
+- Os dados de amostra de colmeias e lotes são criados apenas quando as respectivas tabelas estão vazias.
+- A cópia de segurança do arquivo SQLite é responsabilidade operacional de quem mantém a instalação.
+
+## 7. Documentos relacionados
+
+- [Requisitos funcionais e não funcionais](./02-requisitos.md)
+- [Arquitetura da aplicação](./03-arquitetura.md)
+- [Modelagem de dados e contratos da API](./04-modelagem-dados-e-api.md)
+- [Instalação e operação do backend](./apiario-rocha-backend/README.md)
+
+## 8. Status
+
+O escopo acima descreve o estado implementado da aplicação e registra explicitamente as limitações entre a API e as telas do painel. Requisitos planejados não devem ser interpretados como funcionalidades entregues sem validação no código e nos testes.

@@ -10,6 +10,17 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <dialog id="loginDialog" class="auth-dialog" aria-labelledby="loginTitle">
+      <form id="loginForm" class="register-form">
+        <h2 id="loginTitle">Acesso ao sistema</h2>
+        <label for="loginUsername">Usuário administrador</label>
+        <input id="loginUsername" name="username" type="text" autocomplete="username" required />
+        <label for="loginPassword">Senha</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+        <p id="loginError" class="status-message error" role="alert"></p>
+        <button type="submit" class="primary-btn">Entrar</button>
+      </form>
+    </dialog>
     <div class="app-shell">
       <main class="main-panel">
         <header class="topbar">
@@ -44,6 +55,7 @@
           <button class="module-nav-btn" data-screen="fornecedores" type="button">Fornecedores</button>
           <button class="module-nav-btn" data-screen="vendas" type="button">Vendas</button>
           <button class="module-nav-btn" data-screen="estoque" type="button">Estoque</button>
+          <button class="module-nav-btn" data-screen="produtos" type="button">Produtos</button>
           <button class="module-nav-btn" data-screen="financeiro" type="button">Financeiro</button>
           <button class="module-nav-btn" data-screen="colmeias" type="button">Colmeias</button>
           <button class="module-nav-btn" data-screen="lotes" type="button">Lotes</button>
@@ -60,16 +72,16 @@
             </div>
             <div class="mini-summary">
               <div>
-                <span>Ativos</span>
-                <strong>128</strong>
+                <span>Colmeias ativas</span>
+                <strong id="dashboardActiveColmeias">0</strong>
               </div>
               <div>
-                <span>Produção</span>
-                <strong>92%</strong>
+                <span>Lotes registrados</span>
+                <strong id="dashboardLotesCount">0</strong>
               </div>
               <div>
                 <span>Última atualização</span>
-                <strong>Hoje</strong>
+                <strong id="dashboardLastUpdated">—</strong>
               </div>
             </div>
           </div>
@@ -79,7 +91,7 @@
               <div class="icon-box">🐝</div>
               <div>
                 <p>Colmeias ativas</p>
-                <h3>128</h3>
+                <h3 id="activeColmeiasMetric">0</h3>
               </div>
             </article>
 
@@ -87,15 +99,15 @@
               <div class="icon-box">📦</div>
               <div>
                 <p>Lotes registrados</p>
-                <h3>42</h3>
+                <h3 id="lotesCountMetric">0</h3>
               </div>
             </article>
 
             <article class="stat-card gray-card">
               <div class="icon-box">📡</div>
               <div>
-                <p>Dispositivos online</p>
-                <h3>96%</h3>
+                <p>Leituras de telemetria</p>
+                <h3 id="telemetryCountMetric">0</h3>
               </div>
             </article>
 
@@ -103,7 +115,7 @@
               <div class="icon-box">💰</div>
               <div>
                 <p>Fundo acumulado</p>
-                <h3>R$ 48.700,00</h3>
+                <h3 id="dashboardFundMetric">R$ 0,00</h3>
               </div>
             </article>
           </section>
@@ -112,7 +124,7 @@
             <div class="panel highlight-panel">
               <div class="section-header">
                 <h3>Resumo da operação</h3>
-                <span class="badge success">Atualizado</span>
+                <span id="dashboardStatus" class="badge success">Carregando</span>
               </div>
 
               <div class="insight-metrics">
@@ -141,14 +153,7 @@
                 <button class="text-btn" type="button">Ver relatório</button>
               </div>
 
-              <div class="chart-bars" aria-label="Fluxo de vendas por semana">
-                <span style="--bar-height: 28%"></span>
-                <span style="--bar-height: 42%"></span>
-                <span style="--bar-height: 58%"></span>
-                <span style="--bar-height: 66%"></span>
-                <span style="--bar-height: 76%"></span>
-                <span style="--bar-height: 88%"></span>
-                <span style="--bar-height: 72%"></span>
+              <div class="chart-bars" id="salesChart" role="img" aria-label="Fluxo de vendas dos últimos sete dias">
               </div>
             </div>
           </section>
@@ -302,8 +307,8 @@
                 <h4>Usuário</h4>
                 <input type="text" name="nome" placeholder="Nome" required />
                 <input type="email" name="email" placeholder="E-mail" required />
-                <input type="text" name="username" placeholder="Usuário" required />
-                <input type="password" name="password" placeholder="Senha" required />
+                <input type="text" name="username" placeholder="Usuário" minlength="3" required />
+                <input type="password" name="password" placeholder="Senha (mínimo de 6 caracteres)" minlength="6" required />
                 <select name="perfil">
                   <option value="usuario">Usuário</option>
                   <option value="operador">Operador</option>
@@ -478,6 +483,53 @@
           </div>
         </section>
 
+        <section id="screen-produtos" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <h3>Produtos</h3>
+              <span class="badge success">Catálogo</span>
+            </div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Catálogo de vendas</span>
+              <span class="mini-pill neutral">Cadastro de produtos</span>
+            </div>
+            <div class="secondary-form-row">
+              <form id="produtoForm" class="register-form" data-kind="produto" data-create-endpoint="/produtos/cadastrar" data-update-endpoint="/produtos">
+                <h4>Produto</h4>
+                <input type="text" name="codigo" placeholder="Código (opcional)" />
+                <input type="text" name="nome" placeholder="Nome do produto" required />
+                <input type="text" name="categoria" placeholder="Categoria" value="geral" required />
+                <input type="text" name="descricao" placeholder="Descrição (opcional)" />
+                <input type="number" name="preco" placeholder="Preço" min="0" step="0.01" required />
+                <input type="text" name="unidade" placeholder="Unidade de venda" value="unidade" required />
+                <select name="ativo" aria-label="Status do produto">
+                  <option value="true" selected>Ativo</option>
+                  <option value="false">Inativo</option>
+                </select>
+                <button type="submit" class="primary-btn">Salvar produto</button>
+              </form>
+            </div>
+            <div class="table-card">
+              <div class="table-card-header">
+                <div class="table-card-tools">
+                  <h4>Produtos cadastrados</h4>
+                  <div class="table-tools-right">
+                    <input class="table-search" data-kind="produto" type="search" placeholder="Buscar produtos" />
+                    <button class="export-btn" data-kind="produto" type="button">Exportar CSV</button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table"><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Descrição</th><th>Preço</th><th>Unidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="produtosTableBody"></tbody></table>
+              </div>
+              <div class="table-footer">
+                <span id="produtosMeta" class="table-meta">0 registros</span>
+                <div class="pagination"><button class="page-btn" type="button" data-kind="produto" data-action="prev">Anterior</button><span id="produtosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="produto" data-action="next">Próximo</button></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="screen-financeiro" class="screen-panel">
           <div class="secondary-window panel">
             <div class="section-header"><h3>Financeiro</h3><span class="badge success">Movimentação</span></div>
@@ -509,6 +561,6 @@
       </main>
     </div>
 
-    <script src="/static/script.js"></script>
+    <script src="/static/script.js?v=security-1"></script>
   </body>
 </html>

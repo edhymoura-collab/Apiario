@@ -4,7 +4,7 @@ from src.config.database import database
 
 
 async def buscar_lote_publico(codigo_lote: str) -> dict[str, Any] | None:
-    lote = await database.lotes.find_one({"codigo_lote": codigo_lote, "auditado": True})
+    lote = await database.find_one("lotes", {"codigo_lote": codigo_lote, "auditado": True})
     if lote is None:
         return None
     return {

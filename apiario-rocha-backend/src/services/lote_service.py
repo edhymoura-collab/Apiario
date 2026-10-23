@@ -18,15 +18,12 @@ async def criar_lote(payload: dict[str, Any]) -> dict[str, Any]:
         "id_colmeia": payload.get("id_colmeia"),
         "criado_em": datetime.now(timezone.utc),
     }
-    result = await database.lotes.insert_one(document)
-    document["_id"] = str(result.inserted_id)
-    return document
+    return await database.insert("lotes", document)
 
 
 async def listar_lotes() -> list[dict[str, Any]]:
-    cursor = database.lotes.find({}).sort("codigo_lote", 1)
-    return [doc async for doc in cursor]
+    return await database.find_many("lotes", order_by="codigo_lote")
 
 
 async def buscar_lote_por_codigo(codigo_lote: str) -> dict[str, Any] | None:
-    return await database.lotes.find_one({"codigo_lote": codigo_lote})
+    return await database.find_one("lotes", {"codigo_lote": codigo_lote})

@@ -3,6 +3,7 @@ from .lote import LoteCreate, LotePublico
 from .financeiro import VendaCreate, DivisaoFinanceira, FundoAcumulado
 from .colmeia import ColmeiaCreate, ColmeiaResponse
 from .estoque import ItemEstoqueCreate, ItemEstoqueUpdate
+from .produto import ProdutoCreate, ProdutoUpdate
 
 __all__ = [
     "TelemetriaCreate",
@@ -17,4 +18,6 @@ __all__ = [
     "ColmeiaResponse",
     "ItemEstoqueCreate",
     "ItemEstoqueUpdate",
+    "ProdutoCreate",
+    "ProdutoUpdate",
 ]

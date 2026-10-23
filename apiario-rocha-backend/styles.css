@@ -36,6 +36,33 @@ button {
   cursor: pointer;
 }
 
+.auth-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.auth-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.auth-dialog .register-form {
+  padding: 28px;
+}
+
+.auth-dialog label {
+  margin-bottom: -8px;
+  font-weight: 600;
+}
+
+.auth-dialog .status-message {
+  margin: 0;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -561,10 +588,17 @@ button {
 .chart-bars span {
   flex: 1;
   height: var(--bar-height);
-  min-height: 28px;
+  min-height: 0;
   border-radius: 12px 12px 0 0;
   background: linear-gradient(180deg, var(--blue-700), var(--green-500));
   box-shadow: inset 0 -6px 12px rgba(255, 255, 255, 0.18);
+}
+
+.chart-bars .chart-empty {
+  width: 100%;
+  margin: auto;
+  color: var(--gray-700);
+  text-align: center;
 }
 
 .welcome-shell {

@@ -6,6 +6,8 @@ venv/
 apiario-rocha-backend-py311/
 apiario-rocha-backend/.venv/
 apiario-rocha-backend/venv311/
+apiario-rocha-backend/data/
+data/
 
 # Python
 __pycache__/
@@ -24,6 +26,7 @@ status.txt
 test_output.txt
 .env
 .env.*
+!.env.example
 
 # Sistema
 .DS_Store

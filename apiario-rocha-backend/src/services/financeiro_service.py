@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from bson import ObjectId
-
 from src.config.database import database
 
 
@@ -10,16 +8,19 @@ async def _baixa_estoque_automatica(produto: str | None, quantidade: int | None)
     if not produto or not quantidade or quantidade <= 0:
         return
 
-    item_estoque = await database.estoque.find_one({"produto": produto})
+    item_estoque = await database.find_one("estoque", {"produto": produto})
     if item_estoque is None:
         return
 
     nova_quantidade = max(0, int(item_estoque.get("quantidade", 0)) - int(quantidade))
-    novo_status = "disponivel" if nova_quantidade > 0 else "baixo"
-
-    await database.estoque.update_one(
-        {"produto": produto},
-        {"$set": {"quantidade": nova_quantidade, "status": novo_status, "atualizado_em": datetime.now(timezone.utc)}},
+    await database.update(
+        "estoque",
+        {"_id": item_estoque["_id"]},
+        {
+            "quantidade": nova_quantidade,
+            "status": "disponivel" if nova_quantidade > 0 else "baixo",
+            "atualizado_em": datetime.now(timezone.utc),
+        },
     )
 
 
@@ -46,69 +47,61 @@ async def registrar_venda(payload: dict[str, Any]) -> dict[str, Any]:
         "status": "confirmada",
         "criado_em": datetime.now(timezone.utc),
     }
-    await database.vendas.insert_one(documento)
+    saved = await database.insert("vendas", documento)
     await _baixa_estoque_automatica(payload.get("produto"), payload.get("quantidade"))
-    return documento
+    return saved
 
 
 async def listar_vendas() -> list[dict[str, Any]]:
-    cursor = database.vendas.find({}).sort("data_venda", -1)
-    return [{**doc, "_id": str(doc["_id"])} async for doc in cursor]
+    return await database.find_many("vendas", order_by="data_venda", descending=True)
 
 
 async def atualizar_venda(venda_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     document = {key: value for key, value in payload.items() if value is not None}
     if not document:
         return {"_id": venda_id, "updated": False}
-    await database.vendas.update_one({"_id": ObjectId(venda_id)}, {"$set": document})
-    updated = await database.vendas.find_one({"_id": ObjectId(venda_id)})
-    return {**updated, "_id": str(updated["_id"])}
+    updated = await database.update("vendas", {"_id": venda_id}, document)
+    venda = await database.find_one("vendas", {"_id": venda_id})
+    return venda or {"_id": venda_id, "updated": updated}
 
 
 async def excluir_venda(venda_id: str) -> dict[str, Any]:
-    result = await database.vendas.delete_one({"_id": ObjectId(venda_id)})
-    return {"_id": venda_id, "removido": result.deleted_count > 0}
+    removed = await database.delete("vendas", {"_id": venda_id})
+    return {"_id": venda_id, "removido": removed}
 
 
 async def consultar_fundo_acumulado() -> dict[str, Any]:
-    total = await database.vendas.aggregate([
-        {"$group": {"_id": None, "total": {"$sum": "$valor_fundo"}}}
-    ]).to_list(length=1)
-
-    valor_acumulado = total[0]["total"] if total else 0.0
+    valor_acumulado = await database.sum("vendas", "valor_fundo")
+    now = datetime.now(timezone.utc)
     return {
-        "valor_acumulado": round(float(valor_acumulado), 2),
-        "periodo": "2026-Q4",
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "valor_acumulado": round(valor_acumulado, 2),
+        "periodo": f"{now.year}-Q{(now.month - 1) // 3 + 1}",
+        "updated_at": now.isoformat(),
     }
 
 
 async def obter_resumo_operacional() -> dict[str, Any]:
-    total_vendas = await database.vendas.count_documents({})
-    total_clientes = await database.clientes.count_documents({})
-    total_fornecedores = await database.fornecedores.count_documents({})
-    total_funcionarios = await database.funcionarios.count_documents({})
-
-    fundo_total = await database.vendas.aggregate([
-        {"$group": {"_id": None, "total": {"$sum": "$valor_fundo"}}}
-    ]).to_list(length=1)
-
-    estoque_total = await database.estoque.aggregate([
-        {"$group": {"_id": None, "total": {"$sum": "$quantidade"}}}
-    ]).to_list(length=1)
-
+    total_vendas = await database.count("vendas")
+    total_clientes = await database.count("clientes")
+    total_fornecedores = await database.count("fornecedores")
+    total_funcionarios = await database.count("funcionarios")
+    total_colmeias_ativas = await database.count("colmeias", {"status": "ativa"})
+    total_lotes = await database.count("lotes")
+    total_leituras_telemetria = await database.count("telemetria")
+    fundo_acumulado = await database.sum("vendas", "valor_fundo")
+    estoque_total = await database.sum("estoque", "quantidade")
     mes_atual = datetime.now(timezone.utc).strftime("%Y-%m")
-    faturamento_mes = await database.vendas.aggregate([
-        {"$match": {"data_venda": {"$regex": f"^{mes_atual}"}}},
-        {"$group": {"_id": None, "total": {"$sum": "$valor_bruto"}}}
-    ]).to_list(length=1)
+    faturamento_mes = await database.sum("vendas", "valor_bruto", {"data_venda__startswith": mes_atual})
 
     return {
         "total_vendas": total_vendas,
-        "fundo_acumulado": round(float((fundo_total[0]["total"] if fundo_total else 0.0)), 2),
+        "fundo_acumulado": round(fundo_acumulado, 2),
         "total_funcionarios": total_funcionarios,
         "total_clientes": total_clientes,
         "total_fornecedores": total_fornecedores,
-        "estoque_total": int((estoque_total[0]["total"] if estoque_total else 0)),
-        "faturamento_mes": round(float((faturamento_mes[0]["total"] if faturamento_mes else 0.0)), 2),
+        "total_colmeias_ativas": total_colmeias_ativas,
+        "total_lotes": total_lotes,
+        "total_leituras_telemetria": total_leituras_telemetria,
+        "estoque_total": int(estoque_total),
+        "faturamento_mes": round(faturamento_mes, 2),
     }

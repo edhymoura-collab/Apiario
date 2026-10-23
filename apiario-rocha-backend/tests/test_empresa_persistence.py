@@ -1,4 +1,8 @@
+import asyncio
+
+from src.config.database import database
 from src.services.empresa_service import obter_empresa, salvar_empresa
+from src.services.empresa_service import obter_empresa_async, salvar_empresa_async
 
 
 def test_salvar_e_obter_empresa():
@@ -19,3 +23,16 @@ def test_salvar_e_obter_empresa():
     loaded = obter_empresa()
     assert loaded["razaoSocial"] == "Empresa Teste LTDA"
     assert loaded["logoUrl"] == "https://example.com/logo.png"
+
+
+def test_salvar_empresa_persiste_no_sqlite(monkeypatch, tmp_path):
+    monkeypatch.setattr(database, "path", tmp_path / "empresa.db")
+
+    async def save_and_reload():
+        await salvar_empresa_async({"razaoSocial": "Apiário Rocha"})
+        await salvar_empresa_async({"razaoSocial": "Apiário Rocha 4.0"})
+        return await obter_empresa_async()
+
+    loaded = asyncio.run(save_and_reload())
+
+    assert loaded["razaoSocial"] == "Apiário Rocha 4.0"

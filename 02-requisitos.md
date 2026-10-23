@@ -1,159 +1,193 @@
 # Fase 2 — Requisitos do Sistema Apiário Rocha 4.0
 
-## 1. Visão geral dos requisitos
-Esta fase detalha os requisitos funcionais e não funcionais da solução backend do sistema Apiário Rocha 4.0, com base na especificação técnica já definida para a API REST de gestão, ingestão IoT e rastreabilidade.
+## 1. Objetivo e estado
 
-O sistema deve suportar três pilares principais:
-1. Monitoramento operacional de colmeias por sensores IoT;
-2. Rastreabilidade do mel e dados de lote para o consumidor final;
-3. Gestão financeira com regra de 70/30 e acompanhamento do fundo de modernização.
+Este documento consolida os requisitos funcionais e não funcionais do sistema. Requisitos descritos como disponíveis refletem a API e a interface atuais; limitações e comportamentos ainda não implementados são indicados explicitamente para não confundir planejamento com funcionalidade entregue.
 
----
+## 2. Atores
 
-## 2. Requisitos funcionais
+- **Administrador do painel:** acessa as operações autenticadas usando credenciais mantidas na configuração do servidor.
+- **Sensor ou integração IoT:** envia leituras de telemetria pela API; os endpoints atuais de telemetria não exigem autenticação.
+- **Consumidor ou parceiro:** consulta dados públicos de lote por código.
+- **Usuários e administradores cadastrados:** registros mantidos no banco com senha protegida; esses registros não são usados como identidades de login do painel nesta versão.
 
-### 2.1 Módulo de telemetria e IoT
-#### RF-01 — Receber dados de colmeia
-O sistema deve receber payloads com dados de colmeia enviados por dispositivos IoT.
+## 3. Requisitos funcionais
 
-Campos obrigatórios:
-- id_colmeia
-- timestamp
-- peso_kg
-- temperatura_c
-- umidade_p
+### 3.1 Autenticação e segurança
 
-Campos opcionais:
-- bateria_volt
+#### RF-01 — Autenticar o painel
 
-#### RF-02 — Persistir histórico de leitura
-Os dados devem ser armazenados em banco NoSQL com histórico por colmeia, permitindo consultas futuras.
+O sistema deve autenticar o acesso administrativo com `ADMIN_USERNAME` e `ADMIN_PASSWORD` configurados fora do código e emitir token Bearer JWT válido por prazo configurado.
 
-#### RF-03 — Consultar histórico por colmeia
-O sistema deve disponibilizar uma rota para retornar o histórico de uma colmeia específica.
+#### RF-02 — Proteger rotas internas
 
-#### RF-04 — Validar dados de entrada
-Toda leitura recebida deve passar pela validação de tipos, campos obrigatórios e formatação dos valores.
+As operações internas protegidas devem exigir `Authorization: Bearer <token>` válido. Sem token, a API deve responder `401`.
 
-### 2.2 Módulo de rastreabilidade
-#### RF-05 — Consultar lote por código
-O sistema deve permitir consultar um lote de rastreabilidade pelo código do lote.
+#### RF-03 — Armazenar segredos fora do repositório
 
-#### RF-06 — Exibir dados públicos do lote
-A rota pública deve devolver as informações do lote para o consumidor final, incluindo:
-- variedade da florada;
-- data de extração;
-- umidade;
-- pureza;
-- quantidade de potes;
-- informações de laboratório e storytelling.
+O servidor deve exigir `SECRET_KEY` com ao menos 32 caracteres para assinar e validar JWT. Não deve existir chave de assinatura ou credencial administrativa padrão no código.
 
-#### RF-07 — Tratar lote não encontrado
-Quando o código informado não existir ou não estiver auditado, a API deve responder com status 404, sem expor detalhes internos.
+#### RF-04 — Proteger senhas cadastradas
 
-### 2.3 Módulo financeiro
-#### RF-08 — Registrar venda
-O sistema deve registrar uma venda B2B ou cooperativa, incluindo valor bruto e data da operação.
+Senhas de usuários e administradores cadastrados devem ser armazenadas como hash scrypt, nunca devolvidas pela API e migradas de forma automática quando encontradas em texto puro no banco legado.
 
-#### RF-09 — Dividir renda e fundo
-A regra financeira deve dividir automaticamente:
-- 70% para renda familiar / faturamento;
-- 30% para fundo de modernização / retenção.
+### 3.2 Cadastro e gestão
 
-#### RF-10 — Consultar saldo acumulado
-A API deve retornar o saldo acumulado do fundo de modernização para acompanhamento da meta quadrienal.
+#### RF-05 — Gerenciar cadastros internos
 
-#### RF-11 — Requerer autenticação em rotas sensíveis
-Rotas de vendas e registros financeiros devem exigir autenticação com API Key ou JWT.
+Usuários, administradores, funcionários, clientes e fornecedores devem permitir as operações CRUD expostas por suas rotas autenticadas e validação dos campos por Pydantic.
 
----
+#### RF-06 — Persistir dados
 
-## 3. Requisitos não funcionais
+Os cadastros devem permanecer disponíveis após reinicializações do processo, por meio do SQLite configurado no servidor.
 
-### 3.1 Performance
-- o sistema deve responder rapidamente às consultas de rastreabilidade;
-- as leituras de telemetria devem ser processadas com baixo tempo de resposta;
-- a API deve suportar volume crescente de sensores e consultas.
+### 3.3 Colmeias, telemetria e produção
 
-### 3.2 Segurança
-- proteger rotas de escrita financeira com autenticação;
-- manter a rota pública de QR Code sem autenticação;
-- não expor stack trace em respostas de erro;
-- armazenar credenciais fora do repositório e respeitar .gitignore.
+#### RF-07 — Gerenciar colmeias
 
-### 3.3 Confiabilidade
-- erro de banco deve ser tratado com resposta HTTP 500 amigável em JSON;
-- logs devem registrar payloads processados com sucesso;
-- falhas de serviço devem ser observáveis e rastreáveis.
+A API deve permitir criação e listagem autenticadas de colmeias.
 
-### 3.4 Manutenibilidade
-- organização por módulos: config, models, routes;
-- uso de Pydantic para validação de dados;
-- uso de FastAPI para rotas e documentação automática;
-- estrutura de código compatível com manutenção e escalabilidade.
+#### RF-08 — Receber telemetria
 
----
+A API deve receber leituras contendo `id_colmeia`, `timestamp`, `peso_kg`, `temperatura_c` e `umidade_p`; `bateria_volt` é opcional. Pesos devem ser positivos e a umidade deve estar entre 0 e 100.
 
-## 4. Regras de negócio
+#### RF-09 — Consultar histórico
 
-### 4.1 Regra da telemetria
-- timestamp deve ser registrado em UTC;
-- peso, temperatura e umidade são obrigatórios;
-- bateria pode ser opcional.
+A API deve disponibilizar consulta do histórico de telemetria por `id_colmeia`.
 
-### 4.2 Regra da rastreabilidade
-- o lote deve possuir código único;
-- informações do lote devem ser públicas quando auditadas;
-- lotes não auditados devem ser recusados com resposta 404.
+### 3.4 Lotes e rastreabilidade
 
-### 4.3 Regra financeira
-- faturamento bruto deve ser convertido para percentual de renda e fundo;
-- cálculo deve seguir exatamente a regra: 70% e 30%;
-- saldo acumulado deve refletir a soma dos valores retidos no período.
+#### RF-10 — Gerenciar lotes
 
-### 4.4 Regra de segurança
-- rotas de escrita devem exigir cabeçalho Authorization com Bearer token ou API key;
-- ausência de autenticação em endpoints financeiros deve ser bloqueada;
-- logs de leitura IoT devem ser registráveis pelo sistema sem expor dados sensíveis.
+A API deve permitir cadastrar e consultar internamente lotes por rotas autenticadas.
 
----
+#### RF-11 — Expor rastreabilidade pública
 
-## 5. Endpoints esperados
+Uma pessoa sem login deve poder consultar o lote pelo código. A resposta pública deve limitar-se aos dados de rastreabilidade definidos para o consumidor e somente deve ser fornecida quando o lote estiver auditado.
 
-### 5.1 Telemetria
-- POST /api/v1/telemetria
-- GET /api/v1/telemetria/{id_colmeia}
+#### RF-12 — Tratar lote indisponível
 
-### 5.2 Rastreabilidade
-- GET /api/v1/rastreabilidade/{codigo_lote}
+Lote inexistente ou não auditado deve produzir `404` sem expor detalhes internos.
 
-### 5.3 Gestão financeira
-- POST /api/v1/vendas/registrar
-- GET /api/v1/financeiro/fundo-acumulado
+### 3.5 Catálogo, estoque e vendas
 
----
+#### RF-13 — Manter catálogo de produtos
 
-## 6. Critérios de aceitação
-1. A API responde com status 201 em registros válidos de telemetria.
-2. A API retorna histórico por colmeia com base no id informado.
-3. A consulta de lote público devolve os dados esperados do lote válido.
-4. A consulta de lote inválido retorna 404.
-5. A rota financeira exige autenticação.
-6. O cálculo financeiro gera corretamente 70% e 30%.
-7. Em caso de falha do banco, a API responde com erro amigável em JSON.
-8. Logs de payload de IoT são registrados no terminal e em estrutura observável.
+O sistema deve permitir cadastrar, listar, editar e excluir produtos com código opcional, nome, categoria, descrição opcional, preço não negativo, unidade e status ativo.
 
-## 7. Entregáveis da fase
-- requisitos funcionais consolidados;
-- requisitos não funcionais definidos;
-- regras de negócio documentadas;
-- critérios de aceitação para desenvolvimento e validação.
+#### RF-14 — Separar catálogo e inventário
 
-## 8. Status da fase
-Status: concluída para revisão.
+O cadastro comercial do produto deve ser armazenado separadamente da quantidade disponível e dos alertas de estoque.
 
-> Próxima fase: arquitetura técnica e estrutura do backend.
+#### RF-15 — Gerenciar estoque
 
----
+A API deve permitir cadastrar, consultar, atualizar e excluir itens de estoque, além de consultar alertas e relatório do inventário.
 
-Se aprovar esta fase, eu sigo imediatamente para a Fase 3 em um arquivo separado.
+#### RF-16 — Registrar vendas
+
+A API deve permitir registrar venda com código, data, valor bruto positivo, tipo e campos opcionais de produto e quantidade.
+
+#### RF-17 — Dividir a receita
+
+Cada venda deve calcular 70% para renda e 30% para o fundo de modernização.
+
+#### RF-18 — Consultar indicadores
+
+A API deve fornecer saldo acumulado, resumo do dashboard e resumo de relatórios para o painel autenticado.
+
+### 3.6 Empresa e interface
+
+#### RF-19 — Manter dados da empresa
+
+A API deve permitir consultar e atualizar o perfil da empresa por rotas autenticadas.
+
+#### RF-20 — Exibir módulos administrativos
+
+O painel deve permitir navegação pelos módulos implementados e oferecer operações de cadastro e tabela onde há formulário conectado à API.
+
+## 4. Requisitos não funcionais
+
+### 4.1 Segurança
+
+- Guardar `.env` fora do controle de versão e gerar segredos aleatórios exclusivos por instalação.
+- Usar comparação em tempo constante para credenciais e verificação de hash.
+- Nunca incluir senhas nos resultados de listagem, criação ou atualização.
+- Restringir acesso administrativo por JWT nas rotas internas.
+- Limitar a exposição pública de rastreabilidade ao contrato do consumidor.
+- Documentar que CORS não autentica chamadas diretas à API.
+- Registrar que as rotas de telemetria estão abertas na implementação atual e devem ficar em rede confiável até receber autenticação apropriada.
+
+### 4.2 Confiabilidade e integridade
+
+- Criar tabelas do SQLite automaticamente na inicialização.
+- Preservar identificadores dos registros e serializar datas em ISO 8601.
+- Retornar erros de validação como `422`, ausência de autenticação como `401` e lote público indisponível como `404`.
+- Não retornar stack trace ao cliente.
+- Manter cópia de segurança do arquivo SQLite antes de operações de manutenção.
+
+### 4.3 Manutenibilidade
+
+- Separar rotas, modelos, regras de serviço, autenticação e persistência.
+- Validar payloads com Pydantic.
+- Manter testes automatizados para API, serviços, persistência e segurança.
+- Manter documentação de operação e contratos sincronizada com o OpenAPI implementado.
+
+### 4.4 Limites de capacidade conhecidos
+
+A aplicação não implementa atualmente controle de acesso por papéis, rate limiting, revogação de JWT, logging estruturado, métricas ou tracing centralizado. A validade do token não substitui os controles de autorização por função ainda necessários para implantação multiusuário.
+
+## 5. Regras de negócio e validação
+
+| Domínio | Regra implementada |
+|---|---|
+| JWT | `SECRET_KEY` obrigatória e com comprimento mínimo de 32 caracteres; token Bearer com validade definida por `ACCESS_TOKEN_EXPIRE_MINUTES`. |
+| Login | `ADMIN_USERNAME` e `ADMIN_PASSWORD` configurados no servidor; senha administrativa com pelo menos 12 caracteres; ausência de credenciais retorna `503`. |
+| Senhas cadastradas | Hash scrypt individualizado por salt; não incluído nas respostas; dados legados em texto puro migram ao inicializar o banco. |
+| Telemetria | `peso_kg > 0`, `0 <= umidade_p <= 100`, timestamp convertido para UTC, bateria opcional. |
+| Lote | Criação exige dados de origem e qualidade; a consulta pública limita-se a lote auditado. |
+| Produto | Nome obrigatório, preço `>= 0`; código e descrição opcionais; produto independente do estoque. |
+| Estoque | Quantidade, mínimo e preço unitário não negativos; item de estoque possui campos e ciclo de vida próprios. |
+| Venda | Valor bruto positivo; renda de 70% e fundo de 30%; produto e quantidade opcionais. |
+
+## 6. Matriz de acesso da API
+
+`Protegido` significa exigência de JWT Bearer. `Público` significa que a rota não exige esse token na implementação atual.
+
+| Grupo | Rotas | Acesso |
+|---|---|---|
+| Saúde e autenticação | `GET /health`, `POST /api/v1/auth/login` | Público |
+| Consulta de rastreabilidade | `GET /api/v1/rastreabilidade/{codigo_lote}` | Público |
+| Telemetria | `POST /api/v1/telemetria`, `GET /api/v1/telemetria/{id_colmeia}` | Público; limitar a rede confiável |
+| Usuários | `GET /api/v1/usuarios`, `POST /api/v1/usuarios/cadastrar`, `PUT/DELETE /api/v1/usuarios/{usuario_id}` | Protegido |
+| Administradores | `GET /api/v1/administradores`, `POST /api/v1/administradores/cadastrar`, `PUT/DELETE /api/v1/administradores/{administrador_id}` | Protegido |
+| Funcionários | `GET /api/v1/funcionarios`, `POST /api/v1/funcionarios/cadastrar`, `PUT/DELETE /api/v1/funcionarios/{funcionario_id}` | Protegido |
+| Clientes | `GET /api/v1/clientes`, `POST /api/v1/clientes/cadastrar`, `PUT/DELETE /api/v1/clientes/{cliente_id}` | Protegido |
+| Fornecedores | `GET /api/v1/fornecedores`, `POST /api/v1/fornecedores/cadastrar`, `PUT/DELETE /api/v1/fornecedores/{fornecedor_id}` | Protegido |
+| Colmeias | `GET /api/v1/colmeias`, `POST /api/v1/colmeias` | Protegido |
+| Lotes | `GET /api/v1/lotes`, `POST /api/v1/lotes`, `GET /api/v1/lotes/{codigo_lote}` | Protegido |
+| Produtos | `GET /api/v1/produtos`, `POST /api/v1/produtos/cadastrar`, `PUT/DELETE /api/v1/produtos/{produto_id}` | Protegido |
+| Estoque | `GET /api/v1/estoque`, `POST /api/v1/estoque/cadastrar`, `PUT/DELETE /api/v1/estoque/{item_id}`, `GET /api/v1/estoque/alertas`, `GET /api/v1/estoque/relatorio` | Protegido |
+| Vendas e financeiro | `GET /api/v1/vendas`, `POST /api/v1/vendas/registrar`, `PUT/DELETE /api/v1/vendas/{venda_id}`, `GET /api/v1/financeiro/fundo-acumulado` | Protegido |
+| Indicadores | `GET /api/v1/dashboard/resumo`, `GET /api/v1/relatorios/resumo` | Protegido |
+| Empresa | `GET /api/v1/empresa`, `PUT /api/v1/empresa` | Protegido |
+
+## 7. Critérios de aceitação
+
+1. Login configurado retorna JWT; credenciais padrão antigas são rejeitadas.
+2. Sem segredo JWT válido, a aplicação não emite nem aceita tokens.
+3. Rotas protegidas rejeitam requisições anônimas com `401`.
+4. Listagem e atualização de usuários e administradores não retornam o campo `password`.
+5. Novas senhas são armazenadas com hash scrypt e verificáveis sem armazenar o texto original.
+6. Inicialização converte senhas legadas para hash sem alterar a capacidade de validar a senha original.
+7. Telemetria válida é persistida; entradas fora dos limites Pydantic são rejeitadas.
+8. Consulta pública retorna apenas dados permitidos para lote auditado; lote não elegível retorna `404`.
+9. Produtos são persistidos no catálogo separado da tabela de estoque e permitem CRUD autenticado.
+10. Venda válida persiste os valores da divisão 70/30.
+11. Toda rota e seu requisito de autenticação pode ser conferida no `/docs` gerado pelo FastAPI.
+
+## 8. Documentos relacionados
+
+- [Visão geral](./01-visao-geral.md)
+- [Arquitetura](./03-arquitetura.md)
+- [Modelagem e contratos](./04-modelagem-dados-e-api.md)
+- [Instalação, execução e segurança operacional](./apiario-rocha-backend/README.md)

@@ -15,11 +15,13 @@ async def salvar_telemetria(payload: dict[str, Any]) -> dict[str, Any]:
         "bateria_volt": payload.get("bateria_volt"),
         "criado_em": now,
     }
-    result = await database.telemetria.insert_one(document)
-    document["_id"] = str(result.inserted_id)
-    return document
+    return await database.insert("telemetria", document)
 
 
 async def listar_historico_por_colmeia(id_colmeia: str) -> list[dict[str, Any]]:
-    cursor = database.telemetria.find({"id_colmeia": id_colmeia}).sort("timestamp_utc", -1)
-    return [doc async for doc in cursor]
+    return await database.find_many(
+        "telemetria",
+        {"id_colmeia": id_colmeia},
+        order_by="timestamp_utc",
+        descending=True,
+    )

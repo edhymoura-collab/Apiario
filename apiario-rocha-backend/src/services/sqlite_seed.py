@@ -2,8 +2,8 @@ from src.config.database import database
 
 
 async def seed_sample_data() -> None:
-    if await database.colmeias.count_documents({}) == 0:
-        await database.colmeias.insert_one({
+    if await database.count("colmeias") == 0:
+        await database.insert("colmeias", {
             "codigo": "C-001",
             "nome": "Colmeia Norte 01",
             "localizacao": "Setor A",
@@ -11,8 +11,8 @@ async def seed_sample_data() -> None:
             "observacoes": "Colmeia ativa e monitorada",
         })
 
-    if await database.lotes.count_documents({}) == 0:
-        await database.lotes.insert_one({
+    if await database.count("lotes") == 0:
+        await database.insert("lotes", {
             "codigo_lote": "LOT-001",
             "variedade_florada": "Eucalipto",
             "data_extracao": "2026-10-18",

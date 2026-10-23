@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -21,11 +22,12 @@ class Settings(BaseSettings):
             "http://localhost:8000",
         ]
     )
-    mongo_uri: str = "mongodb://localhost:27017"
-    mongo_db: str = "apiario_backend_db"
-    secret_key: str = "change-me-in-production"
+    sqlite_path: Path = Path("../data/apiario.db")
+    secret_key: str | None = None
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    admin_username: str | None = None
+    admin_password: str | None = None
 
     class Config:
         env_file = ".env"

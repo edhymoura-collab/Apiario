@@ -1,7 +1,10 @@
+import hmac
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from src.auth.security import create_access_token
+from src.config.settings import get_settings
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
 
@@ -12,8 +15,27 @@ class LoginRequest(BaseModel):
 
 
 async def authenticate_user(username: str, password: str) -> dict[str, str]:
-    if username == "admin" and password == "admin123":
-        return {"username": username}
+    settings = get_settings()
+    if (
+        not settings.admin_username
+        or not settings.admin_password
+        or len(settings.admin_password) < 12
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Administrador não configurado. Defina ADMIN_USERNAME e ADMIN_PASSWORD no arquivo .env.",
+        )
+
+    valid_username = hmac.compare_digest(
+        username.encode("utf-8"),
+        settings.admin_username.encode("utf-8"),
+    )
+    valid_password = hmac.compare_digest(
+        password.encode("utf-8"),
+        settings.admin_password.encode("utf-8"),
+    )
+    if valid_username and valid_password:
+        return {"username": settings.admin_username}
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
 
 

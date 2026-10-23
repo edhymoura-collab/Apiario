@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from bson import ObjectId
-
 from src.config.database import database
 
 
@@ -18,14 +16,11 @@ async def cadastrar_item_estoque(payload: dict[str, Any]) -> dict[str, Any]:
         "criado_em": datetime.now(timezone.utc),
         "atualizado_em": datetime.now(timezone.utc),
     }
-    result = await database.estoque.insert_one(item)
-    item["_id"] = str(result.inserted_id)
-    return item
+    return await database.insert("estoque", item)
 
 
 async def listar_estoque() -> list[dict[str, Any]]:
-    cursor = database.estoque.find({}).sort("produto", 1)
-    return [{**doc, "_id": str(doc["_id"])} async for doc in cursor]
+    return await database.find_many("estoque", order_by="produto")
 
 
 async def atualizar_item_estoque(item_id: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -38,14 +33,14 @@ async def atualizar_item_estoque(item_id: str, payload: dict[str, Any]) -> dict[
     if "preco_unitario" in document:
         document["preco_unitario"] = float(document["preco_unitario"])
     document["atualizado_em"] = datetime.now(timezone.utc)
-    await database.estoque.update_one({"_id": ObjectId(item_id)}, {"$set": document})
-    updated = await database.estoque.find_one({"_id": ObjectId(item_id)})
-    return {**updated, "_id": str(updated["_id"])}
+    await database.update("estoque", {"_id": item_id}, document)
+    updated = await database.find_one("estoque", {"_id": item_id})
+    return updated or {"_id": item_id, "updated": False}
 
 
 async def excluir_item_estoque(item_id: str) -> dict[str, Any]:
-    result = await database.estoque.delete_one({"_id": ObjectId(item_id)})
-    return {"_id": item_id, "removido": result.deleted_count > 0}
+    removed = await database.delete("estoque", {"_id": item_id})
+    return {"_id": item_id, "removido": removed}
 
 
 async def listar_alertas_estoque() -> list[dict[str, Any]]:
