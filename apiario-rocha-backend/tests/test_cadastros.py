@@ -1,9 +1,22 @@
+from pathlib import Path
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from src.auth.security import get_current_user
 from src.main import app
 
 client = TestClient(app)
+
+
+def test_perfil_usuario_exibe_opcoes_de_permissao():
+    html_path = Path(__file__).resolve().parents[1] / "index.html"
+    html = html_path.read_text(encoding="utf-8")
+    usuario_form_html = html.split('<form id="usuarioForm"', 1)[1].split("</form>", 1)[0]
+
+    assert 'value="usuario"' in usuario_form_html
+    assert 'value="operador"' in usuario_form_html
+    assert 'value="admin"' in usuario_form_html
 
 
 def test_cadastrar_usuario(monkeypatch):
@@ -114,6 +127,38 @@ def test_cadastrar_venda(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["codigo_venda"] == "VEN-001"
+
+
+def test_login_aceita_usuario_cadastrado(monkeypatch):
+    async def fake_find_one(query):
+        assert query["username"] == "joao"
+        return {"username": "joao", "password": "123456", "perfil": "operador", "ativo": True}
+
+    monkeypatch.setattr("src.routes.auth.database", SimpleNamespace(usuarios=SimpleNamespace(find_one=fake_find_one)))
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": "joao", "password": "123456"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["perfil"] == "operador"
+
+
+def test_usuarios_exige_perfil_admin(monkeypatch):
+    async def fake_find_one(query):
+        return {"username": "joao", "password": "123456", "perfil": "operador", "ativo": True}
+
+    monkeypatch.setattr("src.routes.usuarios.database", SimpleNamespace(usuarios=SimpleNamespace(find_one=fake_find_one)))
+    app.dependency_overrides[get_current_user] = lambda: "joao"
+
+    try:
+        response = client.get("/api/v1/usuarios", headers={"Authorization": "Bearer test-token"})
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Permissão insuficiente"
 
 
 def test_listar_e_manipular_usuarios(monkeypatch):

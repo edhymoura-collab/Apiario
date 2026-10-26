@@ -129,3 +129,40 @@ def test_criar_lote_requer_autenticacao(monkeypatch):
 
     assert response.status_code == 201
     assert response.json()["codigo_lote"] == "LOT-002"
+
+
+def test_dashboard_resumo_fallback_quando_banco_falha(monkeypatch):
+    async def fake_obter_resumo_operacional():
+        raise RuntimeError("MongoDB indisponível")
+
+    monkeypatch.setattr("src.routes.financeiro.obter_resumo_operacional", fake_obter_resumo_operacional)
+    app.dependency_overrides[get_current_user] = lambda: "admin"
+
+    try:
+        response = client.get("/api/v1/dashboard/resumo")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["usuario"] == "admin"
+    assert data["total_vendas"] == 142
+    assert data["fundo_acumulado"] == 48700
+
+
+def test_listar_vendas_fallback_quando_banco_falha(monkeypatch):
+    async def fake_listar_vendas():
+        raise RuntimeError("MongoDB indisponível")
+
+    monkeypatch.setattr("src.routes.financeiro.listar_vendas", fake_listar_vendas)
+    app.dependency_overrides[get_current_user] = lambda: "admin"
+
+    try:
+        response = client.get("/api/v1/vendas")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["usuario"] == "admin"
+    assert data["vendas"][0]["codigo_venda"] == "VND-101"

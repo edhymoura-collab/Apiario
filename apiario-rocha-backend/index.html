@@ -21,6 +21,26 @@
         <button type="submit" class="primary-btn">Entrar</button>
       </form>
     </dialog>
+
+    <div id="loginModal" class="login-modal" aria-modal="true" role="dialog">
+      <div class="login-card panel">
+        <div class="login-branding">
+          <div class="login-header">
+            <div class="brand-mark" aria-label="Logo da empresa">AR</div>
+            <div>
+              <p class="eyebrow soft">Acesso ao sistema</p>
+              <h2>Entrar na operação</h2>
+            </div>
+          </div>
+          <div class="login-highlight">
+            <span>Gestão apícola</span>
+            <strong>Operação em tempo real</strong>
+          </div>
+        </div>
+
+        <p class="login-helper">Credenciais padrão: admin / admin123</p>
+      </div>
+    </div>
     <div class="app-shell">
       <main class="main-panel">
         <header class="topbar">
@@ -38,6 +58,7 @@
           </div>
 
           <div class="topbar-actions">
+            <span id="systemStatusBadge" class="status-badge neutral">Conectando...</span>
             <button id="reportsBtn" class="ghost-btn" type="button">Relatórios</button>
             <button id="newRegisterBtn" class="primary-btn" type="button">Novo cadastro</button>
             <button id="logoutBtn" class="ghost-btn danger-btn" type="button">Sair</button>
@@ -66,9 +87,9 @@
         <section id="screen-dashboard" class="screen-panel active">
           <div class="welcome-shell panel">
             <div class="welcome-copy">
-              <p class="eyebrow soft">Resumo</p>
-              <h3>Visão geral da operação</h3>
-              <p>Selecione um módulo para acessar cadastros, acompanhamento e gestão.</p>
+              <p class="eyebrow soft">Dashboard executivo</p>
+              <h3>Operação em tempo real</h3>
+              <p>Monitore produção, inventário, finanças e atividade comercial em um único painel.</p>
             </div>
             <div class="mini-summary">
               <div>
@@ -86,7 +107,7 @@
             </div>
           </div>
 
-          <section class="summary-grid">
+          <section class="summary-grid" id="dashboardOverviewCards">
             <article class="stat-card green-card">
               <div class="icon-box">🐝</div>
               <div>
@@ -155,6 +176,24 @@
 
               <div class="chart-bars" id="salesChart" role="img" aria-label="Fluxo de vendas dos últimos sete dias">
               </div>
+            </div>
+          </section>
+
+          <section class="dashboard-secondary-grid">
+            <div class="panel">
+              <div class="section-header">
+                <h3>Atividade recente</h3>
+                <button class="text-btn" type="button">Últimas ações</button>
+              </div>
+              <ul id="dashboardActivityList" class="activity-list"></ul>
+            </div>
+
+            <div class="panel">
+              <div class="section-header">
+                <h3>Alertas operacionais</h3>
+                <span class="badge warning">Ativos</span>
+              </div>
+              <ul id="dashboardAlertsList" class="alert-list"></ul>
             </div>
           </section>
 
@@ -312,6 +351,7 @@
                 <select name="perfil">
                   <option value="usuario">Usuário</option>
                   <option value="operador">Operador</option>
+                  <option value="admin">Administrador</option>
                 </select>
                 <button type="submit" class="primary-btn">Salvar usuário</button>
               </form>

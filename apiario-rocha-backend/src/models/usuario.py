@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -8,7 +8,7 @@ class UsuarioCreate(BaseModel):
     email: str = Field(..., min_length=1)
     username: str = Field(..., min_length=3)
     password: str = Field(..., min_length=6)
-    perfil: str = Field(default="usuario")
+    perfil: Literal["usuario", "operador", "admin"] = Field(default="usuario")
 
 
 class UsuarioUpdate(BaseModel):
@@ -16,7 +16,7 @@ class UsuarioUpdate(BaseModel):
     email: Optional[str] = Field(default=None, min_length=1)
     username: Optional[str] = Field(default=None, min_length=3)
     password: Optional[str] = Field(default=None, min_length=6)
-    perfil: Optional[str] = None
+    perfil: Optional[Literal["usuario", "operador", "admin"]] = None
 
 
 class AdministradorCreate(BaseModel):
