@@ -18,7 +18,8 @@ class LoginRequest(BaseModel):
 async def authenticate_user(username: str, password: str) -> dict[str, str]:
     settings = get_settings()
 
-    if settings.admin_username and settings.admin_password and len(settings.admin_password) >= 12:
+    configured_admin = settings.admin_username and settings.admin_password and len(settings.admin_password) >= 12
+    if configured_admin:
         valid_username = hmac.compare_digest(
             username.encode("utf-8"),
             settings.admin_username.encode("utf-8"),
@@ -29,16 +30,23 @@ async def authenticate_user(username: str, password: str) -> dict[str, str]:
         )
         if valid_username and valid_password:
             return {"username": settings.admin_username, "perfil": "admin"}
+    else:
+        if username == "admin" and password == "admin123":
+            return {"username": username, "perfil": "admin"}
 
-    usuario_db = await database.usuarios.find_one({"username": username, "password": password, "ativo": {"$ne": False}})
+    users_collection = getattr(database, "usuarios", None)
+    if users_collection is not None and hasattr(users_collection, "find_one"):
+        usuario_db = await users_collection.find_one({"username": username, "password": password, "ativo": {"$ne": False}})
+    else:
+        usuario_db = await database.find_one("usuarios", {"username": username, "password": password})
+        if usuario_db is not None and usuario_db.get("ativo") is False:
+            usuario_db = None
+
     if usuario_db:
         return {
             "username": usuario_db["username"],
             "perfil": usuario_db.get("perfil", "usuario"),
         }
-
-    if username == "admin" and password == "admin123":
-        return {"username": username, "perfil": "admin"}
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
 
