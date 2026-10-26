@@ -8,7 +8,7 @@ async def _validar_estoque_disponivel(produto: str | None, quantidade: int | Non
     if not produto or quantidade is None or quantidade <= 0:
         return
 
-    item_estoque = await database.estoque.find_one({"produto": produto})
+    item_estoque = await database.find_one("estoque", {"produto": produto})
     if item_estoque is None:
         raise ValueError(f"Produto '{produto}' não encontrado em estoque.")
 
