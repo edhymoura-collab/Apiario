@@ -23,6 +23,7 @@ def create_access_token(subject: str, perfil: str = "usuario") -> str:
 
 
 def _decode_token(token: str) -> dict:
+    settings = get_settings()
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         if payload.get("sub") is None:
@@ -50,6 +51,12 @@ def get_current_user(credentials: Annotated[HTTPAuthorizationCredentials | None,
 
 
 def get_current_user_profile(credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)]) -> str:
+    settings = get_settings()
+    if not settings.secret_key or len(settings.secret_key) < 32:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Chave JWT não configurada. Defina SECRET_KEY no arquivo .env.",
+        )
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

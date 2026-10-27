@@ -38,7 +38,7 @@
           </div>
         </div>
 
-        <p class="login-helper">Credenciais padrão: admin / admin123</p>
+        <p class="login-helper">Credenciais padrão: admin / apiario123</p>
       </div>
     </div>
     <div class="app-shell">
@@ -46,21 +46,19 @@
         <header class="topbar">
           <div class="topbar-branding">
             <div class="brand-block">
-              <div class="brand-mark" aria-label="Logo da empresa">AR</div>
+              <div class="brand-mark" id="topbarBrandMark" aria-label="Logo da empresa">AR</div>
               <div class="brand-copy">
                 <p class="eyebrow soft">Painel operacional</p>
                 <h1 id="brandCompanyName">Empresa Exemplo</h1>
               </div>
             </div>
             <div class="topbar-summary">
-              <h2 id="headerCompanyTitle">Visão geral · Empresa Exemplo</h2>
+              <h2 id="headerCompanyTitle">Empresa Exemplo</h2>
             </div>
           </div>
 
           <div class="topbar-actions">
             <span id="systemStatusBadge" class="status-badge neutral">Conectando...</span>
-            <button id="reportsBtn" class="ghost-btn" type="button">Relatórios</button>
-            <button id="newRegisterBtn" class="primary-btn" type="button">Novo cadastro</button>
             <button id="logoutBtn" class="ghost-btn danger-btn" type="button">Sair</button>
           </div>
         </header>
@@ -197,31 +195,6 @@
             </div>
           </section>
 
-          <section class="panel brand-config-panel">
-            <div class="section-header">
-              <h3>Configuração da empresa</h3>
-              <button id="applyBrandConfig" type="button" class="primary-btn small-btn">Aplicar</button>
-            </div>
-
-            <div class="config-grid">
-              <label>
-                Nome da empresa
-                <input id="companyNameInput" type="text" value="Empresa Exemplo" placeholder="Empresa Exemplo" />
-              </label>
-              <label>
-                Sigla
-                <input id="companyAcronymInput" type="text" value="EE" maxlength="4" placeholder="EE" />
-              </label>
-              <label>
-                Cor primária
-                <input id="companyPrimaryColorInput" type="color" value="#2e8d68" />
-              </label>
-              <label>
-                Cor secundária
-                <input id="companySecondaryColorInput" type="color" value="#5ca6dc" />
-              </label>
-            </div>
-          </section>
         </section>
 
         <section id="screen-relatorios" class="screen-panel">

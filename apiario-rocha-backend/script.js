@@ -589,7 +589,6 @@ function syncCompanyProfileForm() {
 }
 
 function setLogoPreviewFromUrl(url) {
-  const brandMark = document.querySelector('.brand-mark');
   const previewBox = document.getElementById('logoPreviewBox');
   const companyName = getStoredBrandConfig().companyName || defaultBrandConfig.companyName;
   const fallbackLogo = buildCompanyLogoDataUrl(companyName);
@@ -599,14 +598,25 @@ function setLogoPreviewFromUrl(url) {
     previewBox.innerHTML = `<img src="${resolvedUrl}" alt="Pré-visualização da logo da empresa" />`;
   }
 
-  if (!brandMark) return;
+  const dashboardBrandMark = document.getElementById('dashboardBrandMark');
+  if (dashboardBrandMark) {
+    dashboardBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
+    dashboardBrandMark.style.padding = '0';
+    dashboardBrandMark.style.overflow = 'hidden';
+    dashboardBrandMark.style.background = 'transparent';
+    dashboardBrandMark.style.boxShadow = 'none';
+    dashboardBrandMark.style.border = 'none';
+  }
 
-  brandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
-  brandMark.style.padding = '0';
-  brandMark.style.overflow = 'hidden';
-  brandMark.style.background = 'transparent';
-  brandMark.style.boxShadow = 'none';
-  brandMark.style.border = 'none';
+  const topbarBrandMark = document.getElementById('topbarBrandMark');
+  if (topbarBrandMark) {
+    topbarBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
+    topbarBrandMark.style.padding = '0';
+    topbarBrandMark.style.overflow = 'hidden';
+    topbarBrandMark.style.background = 'transparent';
+    topbarBrandMark.style.boxShadow = 'none';
+    topbarBrandMark.style.border = 'none';
+  }
 }
 
 async function loadCompanyProfileFromApi() {
@@ -692,11 +702,15 @@ function applyBrandConfig(brandConfig = getStoredBrandConfig()) {
   const acronym = (brandConfig.companyAcronym || companyName.slice(0, 2).toUpperCase() || defaultBrandConfig.companyAcronym).slice(0, 4);
   const logoUrl = getStoredCompanyProfile().logoUrl;
 
-  const brandMark = document.querySelector('.brand-mark');
+  const dashboardBrandMark = document.getElementById('dashboardBrandMark');
+  const topbarBrandMark = document.getElementById('topbarBrandMark');
   const titleNode = document.getElementById('headerCompanyTitle');
-  const nameNode = document.querySelector('.brand-block h1');
+  const nameNode = document.getElementById('brandCompanyName');
+  const dashboardNameNode = document.getElementById('dashboardBrandCompanyName');
 
-  if (brandMark) {
+  [dashboardBrandMark, topbarBrandMark].forEach((brandMark) => {
+    if (!brandMark) return;
+
     const fallbackLogo = buildCompanyLogoDataUrl(companyName);
     const resolvedLogoUrl = logoUrl || fallbackLogo;
     brandMark.innerHTML = `<img src="${resolvedLogoUrl}" alt="Logo da empresa" />`;
@@ -712,9 +726,11 @@ function applyBrandConfig(brandConfig = getStoredBrandConfig()) {
       img.style.objectFit = 'cover';
       img.style.display = 'block';
     }
-  }
+  });
+
   if (nameNode) nameNode.textContent = companyName;
-  if (titleNode) titleNode.textContent = `Visão geral · ${companyName}`;
+  if (dashboardNameNode) dashboardNameNode.textContent = companyName;
+  if (titleNode) titleNode.textContent = companyName;
   document.title = `${companyName} | Sistema de Gestão`;
 
   const companyNameInput = document.getElementById('companyNameInput');
@@ -1387,6 +1403,33 @@ async function checkBackendHealth() {
   }
 }
 
+function initializeApp() {
+  updateSystemStatus('neutral', 'Conectando...');
+
+  return (async () => {
+    const backendIsOnline = await checkBackendHealth();
+
+    if (!backendIsOnline) {
+      showLoginModal();
+      showMessage('Servidor indisponível; usando dados de demonstração.', 'error');
+      return;
+    }
+
+    if (!localStorage.getItem('api_token')) {
+      showLoginModal();
+      showMessage('Faça login para acessar o sistema.', 'success');
+      return;
+    }
+
+    try {
+      await refreshCollections();
+      updateSystemStatus('online', 'API online');
+    } catch (error) {
+      showMessage(error.message || 'Não foi possível carregar os dados.', 'error');
+    }
+  })();
+}
+
 function showScreen(screenName) {
   const screens = document.querySelectorAll('.screen-panel');
   screens.forEach((screen) => {
@@ -1399,64 +1442,12 @@ function showScreen(screenName) {
   });
 }
 
-document.getElementById('reportsBtn')?.addEventListener('click', () => {
-  showScreen('relatorios');
-  showMessage('Relatórios e indicadores da operação atualizados.', 'success');
-});
-
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
   localStorage.removeItem('api_token');
   localStorage.removeItem('companyProfile');
   localStorage.removeItem('companyBrandConfig');
   showLoginModal();
   showMessage('Sessão encerrada. Faça login novamente.', 'success');
-});
-
-document.getElementById('newRegisterBtn')?.addEventListener('click', () => {
-  const activeScreen = document.querySelector('.module-nav-btn.active')?.dataset.screen || 'usuarios';
-  const screenMap = {
-    dashboard: 'usuarios',
-    relatorios: 'relatorios',
-    empresa: 'empresa',
-    usuarios: 'usuarios',
-    administradores: 'administradores',
-    funcionarios: 'funcionarios',
-    clientes: 'clientes',
-    fornecedores: 'fornecedores',
-    vendas: 'vendas',
-    estoque: 'estoque',
-    produtos: 'produtos',
-    financeiro: 'financeiro',
-    colmeias: 'colmeias',
-    lotes: 'lotes',
-    telemetria: 'telemetria',
-    rastreabilidade: 'rastreabilidade',
-  };
-
-  const targetScreen = screenMap[activeScreen] || 'usuarios';
-  const formMap = {
-    empresa: 'empresaForm',
-    usuarios: 'usuarioForm',
-    administradores: 'adminForm',
-    funcionarios: 'funcionarioForm',
-    clientes: 'clienteForm',
-    fornecedores: 'fornecedorForm',
-    vendas: 'vendaForm',
-    estoque: 'estoqueForm',
-    produtos: 'produtoForm',
-  };
-
-  showScreen(targetScreen);
-
-  const formId = formMap[targetScreen];
-  const form = formId ? document.getElementById(formId) : null;
-  if (form) {
-    form.reset();
-    setFormMode(form, 'create');
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  showMessage('Nova tela de cadastro aberta.', 'success');
 });
 
 document.addEventListener('click', async (event) => {
@@ -1600,29 +1591,6 @@ logoUrlInput?.addEventListener('input', (event) => {
   localStorage.setItem('companyProfile', JSON.stringify({ ...profile, logoUrl: url }));
 });
 
-document.getElementById('loginForm')?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const username = form.username.value.trim();
-  const password = form.password.value.trim();
-
-  if (!username || !password) {
-    showMessage('Informe usuário e senha para continuar.', 'error');
-    return;
-  }
-
-  try {
-    const data = await requestLogin(username, password);
-    localStorage.setItem('api_token', data.access_token);
-    hideLoginModal();
-    form.reset();
-    await refreshCollections();
-    showMessage('Login realizado com sucesso.', 'success');
-  } catch (error) {
-    showMessage(error.message || 'Não foi possível entrar no sistema.', 'error');
-  }
-});
-
 document.querySelector('.refresh-btn')?.addEventListener('click', async () => {
   try {
     await refreshCollections();
@@ -1656,17 +1624,4 @@ Object.keys(entityConfig).forEach((kind) => {
   }
 });
 
-(async () => {
-  await checkBackendHealth();
-  if (!localStorage.getItem('api_token')) {
-    showLoginModal();
-    showMessage('Faça login para acessar o sistema.', 'success');
-    return;
-  }
-
-  try {
-    await refreshCollections();
-  } catch (error) {
-    showMessage(error.message || 'Não foi possível carregar os dados.', 'error');
-  }
-})();
+initializeApp();

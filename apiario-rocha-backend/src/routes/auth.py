@@ -18,7 +18,7 @@ class LoginRequest(BaseModel):
 async def authenticate_user(username: str, password: str) -> dict[str, str]:
     settings = get_settings()
 
-    configured_admin = settings.admin_username and settings.admin_password and len(settings.admin_password) >= 12
+    configured_admin = settings.admin_username and settings.admin_password and len(settings.admin_password) >= 4
     if configured_admin:
         valid_username = hmac.compare_digest(
             username.encode("utf-8"),
@@ -31,7 +31,7 @@ async def authenticate_user(username: str, password: str) -> dict[str, str]:
         if valid_username and valid_password:
             return {"username": settings.admin_username, "perfil": "admin"}
     else:
-        if username == "admin" and password == "admin123":
+        if username == "admin" and password == "apiario123":
             return {"username": username, "perfil": "admin"}
 
     users_collection = getattr(database, "usuarios", None)
