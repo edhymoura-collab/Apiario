@@ -2,6 +2,7 @@ const API_BASE = `${window.location.origin}/api/v1`;
 const responseMessage = document.getElementById('responseMessage');
 let adminTokenPromise = null;
 let resolveAdminToken = null;
+let financeMovements = [];
 const defaultBrandConfig = {
   companyName: 'Empresa Exemplo',
   companyAcronym: 'EE',
@@ -238,10 +239,11 @@ const entityConfig = {
     buttonLabel: 'Venda',
     emptyText: 'Nenhuma venda cadastrada.',
     formId: 'vendaForm',
-    exportFields: ['codigo_venda', 'data_venda', 'produto', 'quantidade', 'valor_bruto', 'tipo_venda'],
+    exportFields: ['codigo_venda', 'data_venda', 'forma_pagamento', 'produto', 'quantidade', 'valor_bruto', 'tipo_venda'],
     mapper: (formData) => ({
       codigo_venda: formData.get('codigo_venda'),
       data_venda: formData.get('data_venda'),
+      forma_pagamento: formData.get('forma_pagamento') || 'nao_informado',
       produto: formData.get('produto') || undefined,
       quantidade: formData.get('quantidade') === '' ? undefined : Number(formData.get('quantidade')),
       valor_bruto: formData.get('valor_bruto') === '' ? undefined : Number(formData.get('valor_bruto')),
@@ -250,6 +252,7 @@ const entityConfig = {
     render: (item) => [
       item.codigo_venda || '-',
       item.data_venda || '-',
+      paymentMethodLabel(item.forma_pagamento),
       item.produto || '-',
       item.quantidade ?? '-',
       item.valor_bruto ? `R$ ${Number(item.valor_bruto).toFixed(2)}` : '-',
@@ -259,6 +262,7 @@ const entityConfig = {
     populateForm: (form, item) => {
       form.codigo_venda.value = item.codigo_venda || '';
       form.data_venda.value = item.data_venda || '';
+      form.forma_pagamento.value = item.forma_pagamento || 'nao_informado';
       form.produto.value = item.produto || '';
       form.quantidade.value = item.quantidade ?? '';
       form.valor_bruto.value = item.valor_bruto ?? '';
@@ -944,6 +948,204 @@ function renderSalesChart(vendas) {
   }).join('');
 }
 
+function paymentMethodLabel(method) {
+  const labels = {
+    pix: 'Pix',
+    dinheiro: 'Dinheiro',
+    cartao_credito: 'Cartão de crédito',
+    cartao_debito: 'Cartão de débito',
+    transferencia: 'Transferência',
+    boleto: 'Boleto',
+    outro: 'Outro',
+    nao_informado: 'Não informado',
+  };
+  return labels[method] || 'Não informado';
+}
+
+function localDateInputValue(value = new Date()) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatFinanceDate(value) {
+  if (!value) return '-';
+  const parsed = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  return Number.isNaN(parsed.getTime())
+    ? String(value)
+    : new Intl.DateTimeFormat('pt-BR').format(parsed);
+}
+
+function escapeFinanceHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character]);
+}
+
+function financeMoney(value) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    .format(Number(value || 0));
+}
+
+function renderFinanceSummary(summary) {
+  const selectedDate = summary.data_referencia;
+  const day = summary.dia || {};
+  const month = summary.mes || {};
+  const year = summary.ano || {};
+  const setText = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  };
+
+  setText('financeCurrentBalance', financeMoney(summary.saldo_atual));
+  setText('financePendingTotal', financeMoney(summary.total_pendente));
+  setText('financeDayLabel', formatFinanceDate(selectedDate));
+  setText('financeDayIncome', financeMoney(day.entradas));
+  setText('financeDayExpenses', financeMoney(day.saidas));
+  setText('financeDayReceivable', financeMoney(day.entradas_pendentes));
+  setText('financeDayPayable', financeMoney(day.saidas_pendentes));
+  setText('financeDayBalance', financeMoney(day.saldo));
+  setText('financeMonthLabel', new Intl.DateTimeFormat('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${month.data_inicio}T00:00:00`)));
+  setText('financeMonthIncome', financeMoney(month.entradas));
+  setText('financeMonthExpenses', financeMoney(month.saidas));
+  setText('financeMonthReceivable', financeMoney(month.entradas_pendentes));
+  setText('financeMonthPayable', financeMoney(month.saidas_pendentes));
+  setText('financeMonthBalance', financeMoney(month.saldo));
+  setText('financeYearLabel', selectedDate.slice(0, 4));
+  setText('financeYearIncome', financeMoney(year.entradas));
+  setText('financeYearExpenses', financeMoney(year.saidas));
+  setText('financeYearReceivable', financeMoney(year.entradas_pendentes));
+  setText('financeYearPayable', financeMoney(year.saidas_pendentes));
+  setText('financeYearBalance', financeMoney(year.saldo));
+}
+
+function renderFinanceMovements() {
+  const body = document.getElementById('financeMovementsBody');
+  if (!body) return;
+
+  const start = document.getElementById('financeFilterStart')?.value || '';
+  const end = document.getElementById('financeFilterEnd')?.value || '';
+  const type = document.getElementById('financeFilterType')?.value || '';
+  const items = financeMovements.filter((item) => {
+    const itemDate = String(item.data_movimentacao || '').slice(0, 10);
+    return (!start || itemDate >= start)
+      && (!end || itemDate <= end)
+      && (!type || item.tipo === type);
+  });
+
+  body.innerHTML = items.length
+    ? items.map((item) => {
+      const isSale = item.origem === 'venda';
+      const valueClass = item.tipo === 'entrada' ? 'money-in' : 'money-out';
+      const sign = item.tipo === 'entrada' ? '+' : '−';
+      const actions = isSale
+        ? '<span class="finance-origin">Venda integrada</span>'
+        : `<div class="table-actions"><button class="table-action edit" type="button" data-finance-action="edit" data-id="${escapeFinanceHtml(item._id)}">Editar</button><button class="table-action delete" type="button" data-finance-action="delete" data-id="${escapeFinanceHtml(item._id)}">Excluir</button></div>`;
+      return `<tr>
+        <td>${escapeFinanceHtml(formatFinanceDate(item.data_movimentacao))}</td>
+        <td>${item.tipo === 'entrada' ? 'Entrada' : 'Saída'}</td>
+        <td>${escapeFinanceHtml(item.descricao || '-')}</td>
+        <td>${escapeFinanceHtml(item.categoria || '-')}</td>
+        <td>${escapeFinanceHtml(paymentMethodLabel(item.forma_pagamento))}</td>
+        <td>${item.status === 'pendente' ? 'Pendente' : 'Realizada'}</td>
+        <td class="${valueClass}">${sign} ${escapeFinanceHtml(financeMoney(item.valor))}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="8" class="empty-state">Nenhuma movimentação encontrada neste período.</td></tr>';
+
+  const meta = document.getElementById('financeMovementsMeta');
+  if (meta) meta.textContent = `${items.length} movimentaç${items.length === 1 ? 'ão' : 'ões'}`;
+}
+
+async function refreshFinance() {
+  const referenceInput = document.getElementById('financeReferenceDate');
+  if (!referenceInput) return;
+  if (!referenceInput.value) referenceInput.value = localDateInputValue();
+
+  try {
+    const dateParam = encodeURIComponent(referenceInput.value);
+    const [movementsResponse, summaryResponse] = await Promise.all([
+      requestJson('/financeiro/movimentacoes'),
+      requestJson(`/financeiro/resumo?data_referencia=${dateParam}`),
+    ]);
+    financeMovements = movementsResponse?.movimentacoes || [];
+    renderFinanceSummary(summaryResponse);
+    renderFinanceMovements();
+  } catch (error) {
+    showMessage(error.message || 'Não foi possível carregar o resumo financeiro.', 'error');
+  }
+}
+
+function resetFinanceForm(form = null) {
+  const forms = form ? [form] : [...document.querySelectorAll('.finance-form')];
+  forms.forEach((currentForm) => {
+    currentForm.reset();
+    currentForm.dataset.mode = 'create';
+    currentForm.dataset.editId = '';
+    currentForm.elements.namedItem('data_movimentacao').value = localDateInputValue();
+    currentForm.elements.namedItem('tipo').value = 'entrada';
+    currentForm.querySelector('[data-finance-title]').textContent = 'Novo lançamento';
+    currentForm.querySelector('.finance-submit-button').textContent = 'Salvar lançamento';
+    currentForm.querySelector('.finance-cancel-edit').hidden = true;
+  });
+}
+
+function editFinanceMovement(id) {
+  const item = financeMovements.find((movement) => movement._id === id);
+  if (!item || item.origem === 'venda') return;
+
+  resetFinanceForm();
+  const form = document.getElementById('financeMovementForm');
+  form.elements.namedItem('descricao').value = item.descricao || '';
+  form.elements.namedItem('categoria').value = item.categoria || '';
+  form.elements.namedItem('valor').value = item.valor ?? '';
+  form.elements.namedItem('data_movimentacao').value = String(item.data_movimentacao || '').slice(0, 10);
+  form.elements.namedItem('forma_pagamento').value = item.forma_pagamento || 'outro';
+  form.elements.namedItem('status').value = item.status || 'realizada';
+  form.elements.namedItem('tipo').value = item.tipo || 'entrada';
+  form.dataset.mode = 'edit';
+  form.dataset.editId = id;
+  const typeLabel = item.tipo === 'saida' ? 'saída' : 'entrada';
+  form.querySelector('[data-finance-title]').textContent = `Editar ${typeLabel}`;
+  form.querySelector('.finance-submit-button').textContent = `Atualizar ${typeLabel}`;
+  form.querySelector('.finance-cancel-edit').hidden = false;
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exportFinanceMovements() {
+  const start = document.getElementById('financeFilterStart')?.value || '';
+  const end = document.getElementById('financeFilterEnd')?.value || '';
+  const type = document.getElementById('financeFilterType')?.value || '';
+  const rows = financeMovements.filter((item) => {
+    const itemDate = String(item.data_movimentacao || '').slice(0, 10);
+    return (!start || itemDate >= start)
+      && (!end || itemDate <= end)
+      && (!type || item.tipo === type);
+  });
+  const fields = ['data_movimentacao', 'tipo', 'descricao', 'categoria', 'forma_pagamento', 'status', 'valor', 'origem'];
+  const csvCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const content = [fields.join(';'), ...rows.map((item) => fields.map((field) => csvCell(
+    field === 'forma_pagamento' ? paymentMethodLabel(item[field])
+      : field === 'origem' ? (item.origem || 'manual')
+        : item[field],
+  )).join(';'))].join('\r\n');
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(new Blob(['\uFEFF', content], { type: 'text/csv;charset=utf-8;' }));
+  link.href = url;
+  link.download = 'movimentacoes-financeiras.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 async function atualizarAlertasEstoque() {
   try {
     const [alertasResponse, relatorioResponse] = await Promise.all([
@@ -1106,12 +1308,19 @@ document.getElementById('newRegisterBtn')?.addEventListener('click', () => {
   };
 
   showScreen(targetScreen);
+  if (targetScreen === 'financeiro') {
+    resetFinanceForm();
+    document.querySelector('.finance-entry-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showMessage('Formulários de entrada e saída prontos para lançamento.', 'success');
+    return;
+  }
 
   const formId = formMap[targetScreen];
   const form = formId ? document.getElementById(formId) : null;
   if (form) {
     form.reset();
     setFormMode(form, 'create');
+    if (targetScreen === 'financeiro') resetFinanceForm();
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -1122,6 +1331,7 @@ document.addEventListener('click', async (event) => {
   const moduleButton = event.target.closest('.module-nav-btn');
   if (moduleButton) {
     showScreen(moduleButton.dataset.screen);
+    if (moduleButton.dataset.screen === 'financeiro') await refreshFinance();
     return;
   }
 
@@ -1158,6 +1368,23 @@ document.addEventListener('click', async (event) => {
   const exportButton = event.target.closest('.export-btn');
   if (exportButton) {
     exportToCsv(exportButton.dataset.kind);
+    return;
+  }
+
+  const financeTarget = event.target.closest('[data-finance-action]');
+  if (financeTarget) {
+    const id = financeTarget.dataset.id;
+    if (financeTarget.dataset.financeAction === 'edit') {
+      editFinanceMovement(id);
+    } else if (financeTarget.dataset.financeAction === 'delete' && window.confirm('Deseja excluir esta movimentação financeira?')) {
+      try {
+        await requestJson(`/financeiro/movimentacoes/${encodeURIComponent(id)}`, 'DELETE');
+        showMessage('Movimentação excluída com sucesso.', 'success');
+        await refreshFinance();
+      } catch (error) {
+        showMessage(error.message || 'Não foi possível excluir a movimentação.', 'error');
+      }
+    }
     return;
   }
 
@@ -1264,6 +1491,37 @@ document.querySelector('.refresh-btn')?.addEventListener('click', async () => {
   showMessage('Registros atualizados com sucesso.', 'success');
 });
 
+document.querySelectorAll('.finance-form').forEach((form) => {
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+    payload.tipo = payload.tipo || 'entrada';
+    payload.valor = Number(payload.valor);
+    const isEdit = form.dataset.mode === 'edit';
+    const endpoint = isEdit
+      ? `/financeiro/movimentacoes/${encodeURIComponent(form.dataset.editId)}`
+      : '/financeiro/movimentacoes';
+
+    try {
+      await requestJson(endpoint, isEdit ? 'PUT' : 'POST', payload);
+      showMessage(`${payload.tipo === 'entrada' ? 'Entrada' : 'Saída'} ${isEdit ? 'atualizada' : 'registrada'} com sucesso.`, 'success');
+      resetFinanceForm(form);
+      await refreshFinance();
+    } catch (error) {
+      showMessage(error.message || 'Não foi possível salvar a movimentação.', 'error');
+    }
+  });
+  form.querySelector('.finance-cancel-edit').addEventListener('click', () => resetFinanceForm(form));
+});
+
+document.getElementById('financeExportCsv')?.addEventListener('click', exportFinanceMovements);
+document.getElementById('financeRefreshSummary')?.addEventListener('click', refreshFinance);
+document.getElementById('financeReferenceDate')?.addEventListener('change', refreshFinance);
+['financeFilterStart', 'financeFilterEnd', 'financeFilterType'].forEach((id) => {
+  document.getElementById(id)?.addEventListener('change', renderFinanceMovements);
+});
+
 document.addEventListener('input', (event) => {
   const searchInput = event.target.closest('.table-search');
   if (!searchInput) return;
@@ -1287,4 +1545,5 @@ Object.keys(entityConfig).forEach((kind) => {
   }
 });
 
+resetFinanceForm();
 refreshCollections();

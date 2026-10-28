@@ -1,15 +1,27 @@
 import sys
+from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from src.auth.security import get_current_user
-from src.models.financeiro import VendaCreate, VendaUpdate
+from src.models.financeiro import (
+    MovimentacaoFinanceiraCreate,
+    MovimentacaoFinanceiraUpdate,
+    VendaCreate,
+    VendaUpdate,
+)
 from src.services.financeiro_service import (
+    atualizar_movimentacao_financeira,
     consultar_fundo_acumulado,
+    excluir_movimentacao_financeira,
     excluir_venda,
     listar_vendas,
+    listar_movimentacoes_financeiras,
     obter_resumo_operacional,
+    obter_resumo_financeiro,
+    registrar_movimentacao_financeira,
     registrar_venda,
     atualizar_venda,
 )
@@ -130,6 +142,112 @@ async def excluir_venda_route(venda_id: str, usuario: str = Depends(get_current_
         return {"usuario": usuario, "resultado": resultado}
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao excluir venda") from exc
+
+
+@router.post("/financeiro/movimentacoes", status_code=status.HTTP_201_CREATED)
+async def registrar_movimentacao_route(
+    payload: MovimentacaoFinanceiraCreate,
+    usuario: str = Depends(get_current_user),
+):
+    try:
+        movimentacao = await registrar_movimentacao_financeira(
+            payload.model_dump()
+        )
+        return {"usuario": usuario, "movimentacao": movimentacao}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao registrar movimentação financeira",
+        ) from exc
+
+
+@router.get("/financeiro/movimentacoes")
+async def listar_movimentacoes_route(
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+    tipo: Literal["entrada", "saida"] | None = None,
+    usuario: str = Depends(get_current_user),
+):
+    if data_inicio and data_fim and data_inicio > data_fim:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A data inicial deve ser anterior ou igual à data final.",
+        )
+    try:
+        movimentacoes = await listar_movimentacoes_financeiras(
+            data_inicio.isoformat() if data_inicio else None,
+            data_fim.isoformat() if data_fim else None,
+            tipo,
+        )
+        return {"usuario": usuario, "movimentacoes": movimentacoes}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao listar movimentações financeiras",
+        ) from exc
+
+
+@router.put("/financeiro/movimentacoes/{movimentacao_id}")
+async def atualizar_movimentacao_route(
+    movimentacao_id: str,
+    payload: MovimentacaoFinanceiraUpdate,
+    usuario: str = Depends(get_current_user),
+):
+    try:
+        movimentacao = await atualizar_movimentacao_financeira(
+            movimentacao_id,
+            payload.model_dump(exclude_unset=True),
+        )
+        if movimentacao is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Movimentação financeira não encontrada.",
+            )
+        return {"usuario": usuario, "movimentacao": movimentacao}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao atualizar movimentação financeira",
+        ) from exc
+
+
+@router.delete("/financeiro/movimentacoes/{movimentacao_id}")
+async def excluir_movimentacao_route(
+    movimentacao_id: str,
+    usuario: str = Depends(get_current_user),
+):
+    try:
+        removed = await excluir_movimentacao_financeira(movimentacao_id)
+        if not removed:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Movimentação financeira não encontrada.",
+            )
+        return {"usuario": usuario, "removido": True}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao excluir movimentação financeira",
+        ) from exc
+
+
+@router.get("/financeiro/resumo")
+async def resumo_financeiro_route(
+    data_referencia: date | None = None,
+    usuario: str = Depends(get_current_user),
+):
+    try:
+        resumo = await obter_resumo_financeiro(data_referencia or date.today())
+        return {"usuario": usuario, **resumo}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao consultar resumo financeiro",
+        ) from exc
 
 
 @router.get("/financeiro/fundo-acumulado")

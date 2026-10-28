@@ -8,6 +8,7 @@ Aplicação web para apoiar a gestão de um apiário. O sistema reúne cadastros
 - Gestão de usuários, administradores, funcionários, clientes, fornecedores e dados da empresa.
 - Catálogo de produtos separado do controle de inventário.
 - Controle de estoque, alertas e relatórios.
+- Fluxo de caixa com entradas, saídas, formas de pagamento, valores pendentes e resumos diários, mensais e anuais.
 - Registro de vendas e divisão financeira de 70% para renda e 30% para o fundo de modernização.
 - API para colmeias, leituras de telemetria e lotes de produção.
 - Consulta pública de rastreabilidade para lotes auditados.

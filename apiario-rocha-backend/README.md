@@ -152,35 +152,41 @@ Todas as rotas abaixo usam o prefixo `/api/v1`, exceto `/health`. Para a especif
 | Produtos | `GET /produtos`, `POST /produtos/cadastrar`, `PUT /produtos/{produto_id}`, `DELETE /produtos/{produto_id}` | Bearer JWT |
 | Estoque | `GET /estoque`, `POST /estoque/cadastrar`, `PUT /estoque/{item_id}`, `DELETE /estoque/{item_id}`, `GET /estoque/alertas`, `GET /estoque/relatorio` | Bearer JWT |
 | Vendas | `GET /vendas`, `POST /vendas/registrar`, `PUT /vendas/{venda_id}`, `DELETE /vendas/{venda_id}` | Bearer JWT |
-| Financeiro | `GET /financeiro/fundo-acumulado` | Bearer JWT |
+| Financeiro | `GET /financeiro/fundo-acumulado`, `GET /financeiro/movimentacoes`, `POST /financeiro/movimentacoes`, `PUT /financeiro/movimentacoes/{movimentacao_id}`, `DELETE /financeiro/movimentacoes/{movimentacao_id}`, `GET /financeiro/resumo` | Bearer JWT |
 | Indicadores | `GET /dashboard/resumo`, `GET /relatorios/resumo` | Bearer JWT |
 | Saúde | `GET /health` | Público |
 
-## 9. Catálogo de produtos e estoque
+## 9. Fluxo financeiro
+
+O módulo registra entradas e saídas com descrição, categoria, valor, data, forma de pagamento e situação (realizada ou pendente). O saldo atual considera somente movimentações realizadas; valores pendentes são exibidos separadamente. Os resumos do dia, mês e ano usam a data de referência selecionada, e a lista pode ser filtrada e exportada para CSV.
+
+Vendas registradas no módulo Vendas são incluídas automaticamente como entradas para evitar duplicidade. A forma de pagamento da venda é armazenada; vendas antigas sem essa informação aparecem como “Não informado”. Edite ou exclua uma venda no próprio módulo Vendas. Despesas e outras receitas devem ser lançadas em Financeiro.
+
+## 10. Catálogo de produtos e estoque
 
 O módulo **Produtos** guarda dados comerciais: nome, código opcional, categoria, descrição, preço, unidade e status ativo. O módulo **Estoque** guarda a quantidade física, o preço unitário, o mínimo e os alertas.
 
 Os dois módulos têm tabelas distintas. Criar, editar ou remover um produto no catálogo não cria, ajusta nem exclui automaticamente um item de estoque. As vendas podem registrar o nome do produto como texto e, com quantidade, aplicar as regras de baixa automática de estoque implementadas no serviço de vendas.
 
-## 10. Banco de dados, inicialização e backup
+## 11. Banco de dados, inicialização e backup
 
 Por padrão, o SQLite é armazenado em `../data/apiario.db`, uma pasta acima da raiz pública do backend. O banco e o diretório são criados automaticamente. Personalize o caminho com `SQLITE_PATH`.
 
 Na inicialização, a aplicação:
 
-1. cria as tabelas e índices inexistentes;
+1. cria tabelas e índices inexistentes e adiciona colunas novas às tabelas existentes;
 2. migra as senhas legadas em texto puro de usuários e administradores para scrypt;
 3. carrega registros de amostra para colmeias e lotes somente se cada uma dessas tabelas estiver vazia.
 
 As migrations automáticas de senha alteram o arquivo SQLite. Faça uma cópia de segurança antes de atualização, migração ou operação de manutenção. Para backup consistente com o servidor ativo, use as ferramentas de backup do SQLite ou pare o processo antes de copiar o arquivo.
 
-## 11. Interface administrativa
+## 12. Interface administrativa
 
-O painel implementa tabelas, formulários CRUD, pesquisa, paginação e exportação CSV para usuários, administradores, funcionários, clientes, fornecedores, vendas, estoque e produtos. Empresa usa formulário próprio.
+O painel implementa tabelas, formulários CRUD, pesquisa, paginação e exportação CSV para usuários, administradores, funcionários, clientes, fornecedores, vendas, estoque e produtos. Financeiro permite registrar, editar, excluir e exportar movimentações, além de consultar saldo e resumos por período. Empresa usa formulário próprio.
 
-Colmeias, lotes, telemetria, rastreabilidade e finanças também possuem endpoints de API, mas partes dessas áreas ainda são telas informativas ou indicadores, não formulários administrativos completos. Verifique a seção correspondente no painel antes de presumir que toda operação da API já possui fluxo visual.
+Colmeias, lotes, telemetria e rastreabilidade também possuem endpoints de API, mas partes dessas áreas ainda são telas informativas ou indicadores, não formulários administrativos completos. Verifique a seção correspondente no painel antes de presumir que toda operação da API já possui fluxo visual.
 
-## 12. Executar os testes
+## 13. Executar os testes
 
 Execute na pasta do backend com o ambiente virtual ativado:
 
@@ -198,7 +204,7 @@ $env:PYTHONPATH = "."
 
 Os testes em `tests/` cobrem rotas, autenticação, hashing e migração de senhas, persistência, estoques, produtos e regras financeiras. A suíte usa configurações exclusivas para testes por meio de `tests/conftest.py`; não use esses valores em uma implantação real.
 
-## 13. Erros esperados
+## 14. Erros esperados
 
 | HTTP | Significado comum |
 |---:|---|
@@ -210,7 +216,7 @@ Os testes em `tests/` cobrem rotas, autenticação, hashing e migração de senh
 | `500` | Erro interno da operação ou da persistência; a resposta não deve revelar stack trace. |
 | `503` | Configuração administrativa ou chave JWT ausente/insegura. |
 
-## 14. Solução de problemas
+## 15. Solução de problemas
 
 ### O painel abre, mas solicita login repetidamente
 
@@ -232,7 +238,7 @@ Consulte `detail` na resposta ou `/docs` para identificar os campos inválidos e
 
 Verifique o caminho resolvido pelo `SQLITE_PATH` e a mensagem `SQLite conectado` no terminal. Caminhos relativos são resolvidos a partir do backend.
 
-## 15. Documentação de produto
+## 16. Documentação de produto
 
 - [Roteiro de apresentação do sistema](../roteiro-apresentacao.md)
 - [Visão geral](../01-visao-geral.md)

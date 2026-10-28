@@ -71,8 +71,19 @@ _TABLES = {
         "valor_renda": "REAL",
         "valor_fundo": "REAL",
         "tipo_venda": "TEXT",
+        "forma_pagamento": "TEXT",
         "produto": "TEXT",
         "quantidade": "INTEGER",
+        "status": "TEXT",
+        "criado_em": "TEXT",
+    },
+    "movimentacoes_financeiras": {
+        "tipo": "TEXT",
+        "descricao": "TEXT",
+        "categoria": "TEXT",
+        "valor": "REAL",
+        "data_movimentacao": "TEXT",
+        "forma_pagamento": "TEXT",
         "status": "TEXT",
         "criado_em": "TEXT",
     },
@@ -182,6 +193,13 @@ class SQLiteDatabase:
             await connection.execute(
                 f'CREATE TABLE IF NOT EXISTS "{table_name}" ({", ".join(column_definitions)})'
             )
+            cursor = await connection.execute(f'PRAGMA table_info("{table_name}")')
+            existing_columns = {row["name"] for row in await cursor.fetchall()}
+            for column, data_type in columns.items():
+                if column not in existing_columns:
+                    await connection.execute(
+                        f'ALTER TABLE "{table_name}" ADD COLUMN "{column}" {data_type}'
+                    )
         await connection.execute(
             'CREATE INDEX IF NOT EXISTS "idx_telemetria_colmeia_timestamp" '
             'ON "telemetria" ("id_colmeia", "timestamp_utc")'

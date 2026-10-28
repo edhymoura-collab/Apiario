@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=finance-3" />
   </head>
   <body>
     <dialog id="loginDialog" class="auth-dialog" aria-labelledby="loginTitle">
@@ -444,6 +444,15 @@
                 <h4>Venda</h4>
                 <input type="text" name="codigo_venda" placeholder="Código da venda" required />
                 <input type="date" name="data_venda" required />
+                <select name="forma_pagamento" aria-label="Forma de pagamento da venda" required>
+                  <option value="pix">Pix</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao_credito">Cartão de crédito</option>
+                  <option value="cartao_debito">Cartão de débito</option>
+                  <option value="transferencia">Transferência</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="outro">Outro</option>
+                </select>
                 <input type="text" name="produto" placeholder="Produto" />
                 <input type="number" name="quantidade" min="1" placeholder="Quantidade" />
                 <input type="number" step="0.01" name="valor_bruto" placeholder="Valor bruto" required />
@@ -451,7 +460,7 @@
                 <button type="submit" class="primary-btn">Registrar venda</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Vendas</h4><div class="table-tools-right"><input class="table-search" data-kind="venda" type="search" placeholder="Buscar vendas" /><button class="export-btn" data-kind="venda" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Código</th><th>Data</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="vendasTableBody"></tbody></table></div><div class="table-footer"><span id="vendasMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="venda" data-action="prev">Anterior</button><span id="vendasPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="venda" data-action="next">Próximo</button></div></div></div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Vendas</h4><div class="table-tools-right"><input class="table-search" data-kind="venda" type="search" placeholder="Buscar vendas" /><button class="export-btn" data-kind="venda" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Código</th><th>Data</th><th>Pagamento</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="vendasTableBody"></tbody></table></div><div class="table-footer"><span id="vendasMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="venda" data-action="prev">Anterior</button><span id="vendasPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="venda" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -532,11 +541,86 @@
 
         <section id="screen-financeiro" class="screen-panel">
           <div class="secondary-window panel">
-            <div class="section-header"><h3>Financeiro</h3><span class="badge success">Movimentação</span></div>
-            <div class="placeholder-grid">
-              <article class="placeholder-card"><h4>Fundo acumulado</h4><p>Resumo financeiro geral da operação.</p><strong id="fundoAcumuladoMetricPlaceholder">R$ 0,00</strong></article>
-              <article class="placeholder-card"><h4>Vendas</h4><p>Controle do faturamento e receitas por canal.</p><strong id="salesCountMetricPlaceholder">0</strong></article>
-              <article class="placeholder-card"><h4>Receita do mês</h4><p>Valores totais movimentados no período atual.</p><strong id="monthlyRevenueMetricPlaceholder">R$ 0,00</strong></article>
+            <div class="section-header">
+              <div><h3>Financeiro</h3><p class="finance-subtitle">Acompanhe o caixa, as contas e os resultados da operação.</p></div>
+              <span class="badge success">Fluxo de caixa</span>
+            </div>
+            <div class="finance-balance-grid">
+              <article class="finance-balance-card current-balance"><span>Saldo atual</span><strong id="financeCurrentBalance">R$ 0,00</strong><small>Entradas realizadas menos saídas realizadas</small></article>
+              <article class="finance-balance-card pending-balance"><span>Valores pendentes</span><strong id="financePendingTotal">R$ 0,00</strong><small>Contas a receber e a pagar ainda não realizadas</small></article>
+            </div>
+            <div class="finance-period-toolbar">
+              <label for="financeReferenceDate">Consultar períodos até</label>
+              <input id="financeReferenceDate" type="date" />
+              <button id="financeRefreshSummary" class="secondary-btn" type="button">Atualizar resumo</button>
+            </div>
+            <div class="finance-period-grid">
+              <article class="finance-period-card">
+                <h4>Resumo do dia</h4><p id="financeDayLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeDayIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeDayExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeDayReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeDayPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do dia</dt><dd id="financeDayBalance">R$ 0,00</dd></div></dl>
+              </article>
+              <article class="finance-period-card">
+                <h4>Resumo do mês</h4><p id="financeMonthLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeMonthIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeMonthExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeMonthReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeMonthPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do mês</dt><dd id="financeMonthBalance">R$ 0,00</dd></div></dl>
+              </article>
+              <article class="finance-period-card">
+                <h4>Resumo do ano</h4><p id="financeYearLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeYearIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeYearExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeYearReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeYearPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do ano</dt><dd id="financeYearBalance">R$ 0,00</dd></div></dl>
+              </article>
+            </div>
+            <p class="finance-note">Vendas registradas no módulo Vendas são contabilizadas automaticamente como entradas. Use o status pendente para valores previstos; eles não alteram o saldo atual.</p>
+            <div class="finance-entry-grid">
+              <form id="financeMovementForm" class="register-form finance-form finance-movement">
+                <h4 data-finance-title>Novo lançamento</h4>
+                <label>Descrição
+                  <input type="text" name="descricao" maxlength="160" placeholder="Ex.: venda de mel" required />
+                </label>
+                <label>Categoria
+                  <input type="text" name="categoria" maxlength="80" placeholder="Ex.: venda, produção" required />
+                </label>
+                <label>Valor (R$)
+                  <input type="number" name="valor" min="0.01" step="0.01" placeholder="0,00" required />
+                </label>
+                <label>Data
+                  <input type="date" name="data_movimentacao" required />
+                </label>
+                <label>Forma de pagamento
+                  <select name="forma_pagamento" required>
+                    <option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao_credito">Cartão de crédito</option><option value="cartao_debito">Cartão de débito</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option><option value="outro">Outro</option>
+                  </select>
+                </label>
+                <label>Status
+                  <select name="status" required><option value="realizada">Realizada</option><option value="pendente">Pendente</option></select>
+                </label>
+                <label>Tipo
+                  <select name="tipo" required>
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saída</option>
+                  </select>
+                </label>
+                <div class="finance-form-actions">
+                  <button type="submit" class="primary-btn finance-submit-button">Salvar lançamento</button>
+                  <button type="button" class="secondary-btn finance-cancel-edit" hidden>Cancelar edição</button>
+                </div>
+              </form>
+            </div>
+            <div class="finance-workspace">
+              <div class="table-card finance-table-card">
+                <div class="table-card-header">
+                  <div class="table-card-tools"><h4>Movimentações</h4>
+                    <div class="table-tools-right">
+                      <input id="financeFilterStart" type="date" aria-label="Data inicial" />
+                      <input id="financeFilterEnd" type="date" aria-label="Data final" />
+                      <select id="financeFilterType" aria-label="Filtrar por tipo"><option value="">Entradas e saídas</option><option value="entrada">Entradas</option><option value="saida">Saídas</option></select>
+                      <button id="financeExportCsv" class="export-btn" type="button">Exportar CSV</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table class="data-table finance-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th>Status</th><th>Valor</th><th>Origem / ações</th></tr></thead><tbody id="financeMovementsBody"></tbody></table>
+                </div>
+                <div class="table-footer"><span id="financeMovementsMeta" class="table-meta">0 movimentações</span><span class="table-meta">As vendas são editadas no módulo Vendas.</span></div>
+              </div>
             </div>
           </div>
         </section>
@@ -561,6 +645,6 @@
       </main>
     </div>
 
-    <script src="/static/script.js?v=security-1"></script>
+    <script src="/static/script.js?v=finance-3"></script>
   </body>
 </html>
