@@ -109,7 +109,7 @@ button {
 
 .brand-copy h1 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   line-height: 1.2;
   color: var(--gray-900);
 }
@@ -117,24 +117,27 @@ button {
 .topbar-branding {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .topbar-summary {
-  display: flex;
-  align-items: center;
+  display: none;
+}
+
+.dashboard-brand-strip {
+  display: none !important;
 }
 
 .brand-mark {
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   border-radius: 18px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--green-700), var(--blue-700));
   border: 2px solid rgba(255,255,255,0.45);
-  box-shadow: 0 10px 24px rgba(46, 141, 104, 0.26), 0 0 0 6px rgba(92, 166, 220, 0.12);
+  box-shadow: 0 10px 24px rgba(46, 141, 104, 0.18), 0 0 0 6px rgba(92, 166, 220, 0.06);
   color: var(--white);
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -151,7 +154,7 @@ button {
 
 .eyebrow {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--gray-700);
@@ -250,19 +253,22 @@ button {
 
 .module-nav-btn {
   border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--gray-800);
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
   transition: all 0.2s ease;
 }
 
 .module-nav-btn:hover {
   border-color: rgba(92, 166, 220, 0.36);
-  background: rgba(255, 255, 255, 0.86);
+  background: linear-gradient(135deg, rgba(231,248,238,0.95), rgba(234,245,255,0.95));
+  color: var(--green-900);
+  transform: translateY(-1px);
   box-shadow: 0 10px 18px rgba(92, 166, 220, 0.08);
 }
 
@@ -277,9 +283,173 @@ button {
   font-size: clamp(1.8rem, 2vw, 2.5rem);
 }
 
+.login-modal {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at top left, rgba(92, 166, 220, 0.22), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(46, 141, 104, 0.18), transparent 28%),
+    rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.login-modal.visible {
+  display: flex;
+}
+
+.login-card {
+  width: min(100%, 470px);
+  padding: 0;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(255,255,255,0.4);
+  overflow: hidden;
+}
+
+.login-branding {
+  position: relative;
+  padding: 24px 24px 18px;
+  background: linear-gradient(135deg, rgba(46, 141, 104, 0.07), rgba(92, 166, 220, 0.1));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.login-branding::after {
+  content: "";
+  position: absolute;
+  inset: auto 24px 0 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(46, 141, 104, 0.42), transparent);
+}
+
+.login-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.login-header .brand-mark {
+  width: 88px;
+  height: 88px;
+  border-radius: 26px;
+  box-shadow: 0 18px 36px rgba(46, 141, 104, 0.18), 0 0 0 10px rgba(92, 166, 220, 0.08);
+}
+
+.login-header h2 {
+  margin: 4px 0 0;
+  font-size: 1.8rem;
+}
+
+.login-highlight {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.login-highlight span {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-700);
+}
+
+.login-highlight strong {
+  font-size: 0.9rem;
+  color: var(--gray-900);
+}
+
+.login-form {
+  padding: 22px 24px 24px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.login-form input {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.login-helper {
+  margin: 18px 0 0;
+  text-align: center;
+  color: var(--gray-700);
+  font-size: 0.82rem;
+}
+
+.full-width-btn {
+  width: 100%;
+}
+
 .topbar-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.status-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+.status-badge.neutral {
+  color: #7a5f00;
+  background: rgba(255, 204, 102, 0.18);
+  border-color: rgba(255, 204, 102, 0.4);
+}
+
+.status-badge.online {
+  color: #0d6f4d;
+  background: rgba(73, 179, 120, 0.14);
+  border-color: rgba(73, 179, 120, 0.42);
+}
+
+.status-badge.demo {
+  color: #395f8d;
+  background: rgba(124, 175, 255, 0.14);
+  border-color: rgba(124, 175, 255, 0.38);
 }
 
 .ghost-btn,
@@ -339,6 +509,8 @@ button {
   gap: 16px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(148,163,184,0.12);
+  box-shadow: 0 18px 28px rgba(15,23,42,0.04);
 }
 
 .stat-card::before {
@@ -407,6 +579,9 @@ button {
   padding: 22px 20px;
   position: relative;
   overflow: hidden;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(148,163,184,0.14);
+  box-shadow: 0 18px 30px rgba(15,23,42,0.04);
 }
 
 .panel::after {
@@ -489,7 +664,8 @@ button {
   background: linear-gradient(180deg, #f3f5f7, #eef2f4);
 }
 
-.activity-list {
+.activity-list,
+.alert-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -498,7 +674,8 @@ button {
   gap: 18px;
 }
 
-.activity-list li {
+.activity-list li,
+.alert-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -506,7 +683,8 @@ button {
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.activity-list li:last-child {
+.activity-list li:last-child,
+.alert-item:last-child {
   border-bottom: none;
 }
 
@@ -515,6 +693,35 @@ button {
   height: 12px;
   border-radius: 50%;
   margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.alert-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 249, 251, 0.9));
+}
+
+.alert-item.warning-item {
+  background: linear-gradient(180deg, rgba(255, 247, 230, 0.8), rgba(255, 251, 245, 0.9));
+  border-color: rgba(217, 119, 6, 0.18);
+}
+
+.alert-item.success-item {
+  background: linear-gradient(180deg, rgba(239, 250, 244, 0.8), rgba(244, 252, 248, 0.9));
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
+.alert-item strong,
+.activity-list strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.alert-item small,
+.activity-list small {
+  color: var(--gray-700);
 }
 
 .bullet.green {
@@ -543,6 +750,17 @@ button {
   grid-template-columns: 1.3fr 0.8fr;
   gap: 18px;
   margin-top: 8px;
+}
+
+.dashboard-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.dashboard-secondary-grid .panel {
+  padding: 22px 20px;
 }
 
 .highlight-panel,

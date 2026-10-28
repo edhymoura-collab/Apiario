@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.auth.security import get_current_user
+from src.config.database import database
 from src.models.usuario import UsuarioCreate, UsuarioUpdate
 from src.services.cadastros_service import (
     atualizar_usuario,
@@ -12,8 +13,18 @@ from src.services.cadastros_service import (
 router = APIRouter(prefix="/api/v1", tags=["usuarios"])
 
 
+async def _require_admin(username: str) -> None:
+    if username == "admin":
+        return
+
+    usuario_db = await database.usuarios.find_one({"username": username})
+    if not usuario_db or usuario_db.get("perfil") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissão insuficiente")
+
+
 @router.post("/usuarios/cadastrar", status_code=status.HTTP_201_CREATED)
 async def cadastrar_usuario_route(payload: UsuarioCreate, usuario: str = Depends(get_current_user)):
+    await _require_admin(usuario)
     try:
         novo_usuario = await criar_usuario(payload.model_dump())
         return {
@@ -31,6 +42,7 @@ async def cadastrar_usuario_route(payload: UsuarioCreate, usuario: str = Depends
 
 @router.get("/usuarios")
 async def listar_usuarios_route(usuario: str = Depends(get_current_user)):
+    await _require_admin(usuario)
     try:
         usuarios = await listar_usuarios()
         return {"usuario": usuario, "usuarios": usuarios}
@@ -40,6 +52,7 @@ async def listar_usuarios_route(usuario: str = Depends(get_current_user)):
 
 @router.put("/usuarios/{usuario_id}")
 async def atualizar_usuario_route(usuario_id: str, payload: UsuarioUpdate, usuario: str = Depends(get_current_user)):
+    await _require_admin(usuario)
     try:
         atualizado = await atualizar_usuario(usuario_id, payload.model_dump(exclude_none=True))
         return {"usuario": usuario, "usuario_atualizado": atualizado}
@@ -49,6 +62,7 @@ async def atualizar_usuario_route(usuario_id: str, payload: UsuarioUpdate, usuar
 
 @router.delete("/usuarios/{usuario_id}")
 async def excluir_usuario_route(usuario_id: str, usuario: str = Depends(get_current_user)):
+    await _require_admin(usuario)
     try:
         resultado = await excluir_usuario(usuario_id)
         return {"usuario": usuario, "resultado": resultado}

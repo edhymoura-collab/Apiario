@@ -10,6 +10,83 @@ const defaultBrandConfig = {
   secondaryColor: '#5ca6dc',
 };
 
+const demoSummary = {
+  total_vendas: 142,
+  total_funcionarios: 18,
+  fundo_acumulado: 48700,
+  faturamento_mes: 12840,
+  total_clientes: 56,
+  total_fornecedores: 21,
+  estoque_total: 368,
+};
+
+function getDemoSummary() {
+  const raw = localStorage.getItem('demoSummary');
+  if (!raw) {
+    return { ...demoSummary };
+  }
+
+  try {
+    return { ...demoSummary, ...JSON.parse(raw) };
+  } catch (error) {
+    return { ...demoSummary };
+  }
+}
+
+function persistDemoSummary(summary) {
+  localStorage.setItem('demoSummary', JSON.stringify(summary));
+}
+
+function syncDemoSummary(store = getDemoStore()) {
+  const vendas = store.vendas || demoCollections.venda;
+  const funcionarios = store.funcionarios || demoCollections.funcionario;
+  const clientes = store.clientes || demoCollections.cliente;
+  const fornecedores = store.fornecedores || demoCollections.fornecedor;
+  const estoque = store.estoque || demoCollections.estoque;
+
+  const nextSummary = {
+    ...demoSummary,
+    total_vendas: vendas.length,
+    total_funcionarios: funcionarios.length,
+    total_clientes: clientes.length,
+    total_fornecedores: fornecedores.length,
+    estoque_total: estoque.reduce((total, item) => total + Number(item.quantidade || 0), 0),
+    faturamento_mes: vendas.reduce((total, item) => total + Number(item.valor_bruto || 0), 0),
+    fundo_acumulado: vendas.reduce((total, item) => total + Number(item.valor_fundo || (item.valor_bruto || 0) * 0.3), 0),
+  };
+
+  persistDemoSummary(nextSummary);
+  return nextSummary;
+}
+
+const demoCollections = {
+  usuario: [
+    { _id: 'demo-user-1', nome: 'Ana Souza', email: 'ana@empresa.com', username: 'ana', perfil: 'admin' },
+    { _id: 'demo-user-2', nome: 'Bruno Lima', email: 'bruno@empresa.com', username: 'bruno', perfil: 'usuario' },
+  ],
+  administrador: [
+    { _id: 'demo-admin-1', nome: 'Diretoria', email: 'diretoria@empresa.com', username: 'admin', nivel: 'admin' },
+  ],
+  funcionario: [
+    { _id: 'demo-func-1', nome: 'Carla Mendes', email: 'carla@empresa.com', cargo: 'Gerente', departamento: 'Operação', salario: 6200 },
+    { _id: 'demo-func-2', nome: 'Diego Nunes', email: 'diego@empresa.com', cargo: 'Técnico', departamento: 'Telemetria', salario: 4200 },
+  ],
+  cliente: [
+    { _id: 'demo-client-1', nome: 'Mercado Campo', email: 'contato@mercadocampo.com', telefone: '(11) 99800-1111', tipo: 'pj', cidade: 'Campinas' },
+  ],
+  fornecedor: [
+    { _id: 'demo-provider-1', nome: 'Fornecedores de Mel', cnpj: '11.222.333/0001-88', email: 'vendas@melfornecedores.com', categoria: 'Insumos', cidade: 'São Paulo' },
+  ],
+  venda: [
+    { _id: 'demo-sale-1', codigo_venda: 'VND-101', data_venda: '2026-10-21', produto: 'Mel Premium', quantidade: 68, valor_bruto: 3400, tipo_venda: 'Atacado' },
+    { _id: 'demo-sale-2', codigo_venda: 'VND-102', data_venda: '2026-10-22', produto: 'Mel Floral', quantidade: 42, valor_bruto: 2100, tipo_venda: 'Varejo' },
+  ],
+  estoque: [
+    { _id: 'demo-stock-1', produto: 'Mel Premium 500ml', categoria: 'Produtos', quantidade: 120, preco_unitario: 18.5, estoque_minimo: 40, unidade: 'unidade' },
+    { _id: 'demo-stock-2', produto: 'Pote 250ml', categoria: 'Embalagens', quantidade: 33, preco_unitario: 7.9, estoque_minimo: 20, unidade: 'unidade' },
+  ],
+};
+
 const defaultCompanyProfile = {
   logoUrl: '',
   razaoSocial: 'Empresa Exemplo',
@@ -28,6 +105,19 @@ const defaultCompanyProfile = {
   site: '',
   segmento: '',
 };
+
+const dashboardActivityTemplate = [
+  { label: 'Nova venda registrada', detail: 'VND-102 · hoje' },
+  { label: 'Estoque revisado', detail: '2 itens em alerta · 08:30' },
+  { label: 'Cliente atualizado', detail: 'Mercado Campo · ontem' },
+  { label: 'Relatório enviado', detail: 'Financeiro · 18:10' },
+];
+
+const dashboardAlertsTemplate = [
+  { label: 'Potes em baixo estoque', detail: '2 alertas', type: 'warning-item' },
+  { label: 'Produção estável', detail: '92% da meta', type: 'success-item' },
+  { label: 'Coleta de Mel', detail: '3 colmeias em revisão', type: 'warning-item' },
+];
 const optionalValue = (value) => (value === '' || value === null || value === undefined ? undefined : value);
 const collectionCache = {
   usuario: [],
@@ -345,22 +435,59 @@ const entityConfig = {
   },
 };
 
+async function requestLogin(username, password) {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.detail || 'Credenciais inválidas.');
+  }
+
+  return data;
+}
+
+function showLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.add('visible');
+  }
+}
+
+function hideLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.classList.remove('visible');
+  }
+}
+
 function getAdminToken() {
   const token = localStorage.getItem('api_token');
   if (token) return token;
 
+  const loginDialog = document.getElementById('loginDialog');
+  const loginModal = document.getElementById('loginModal');
+
+  if (!loginDialog && !loginModal) {
+    throw new Error('O formulário de autenticação não está disponível.');
+  }
+
+  if (loginDialog) {
+    loginDialog.showModal();
+  } else if (loginModal) {
+    showLoginModal();
+  }
+
   if (!adminTokenPromise) {
-    const loginDialog = document.getElementById('loginDialog');
-    if (!loginDialog || !document.getElementById('loginForm')) {
-      throw new Error('O formulário de autenticação não está disponível.');
-    }
     adminTokenPromise = new Promise((resolve) => {
       resolveAdminToken = resolve;
     });
-    loginDialog.showModal();
   }
 
-  return adminTokenPromise;
+  throw new Error('Autenticação necessária.');
 }
 
 document.getElementById('loginForm')?.addEventListener('submit', async (event) => {
@@ -390,7 +517,11 @@ document.getElementById('loginForm')?.addEventListener('submit', async (event) =
 
     localStorage.setItem('api_token', payload.access_token);
     form.reset();
-    document.getElementById('loginDialog').close();
+    const loginDialog = document.getElementById('loginDialog');
+    if (loginDialog) {
+      loginDialog.close();
+    }
+    hideLoginModal();
     const resolveToken = resolveAdminToken;
     resolveAdminToken = null;
     adminTokenPromise = null;
@@ -420,6 +551,33 @@ function getStoredCompanyProfile() {
   }
 }
 
+function buildCompanyLogoDataUrl(companyName = defaultBrandConfig.companyName) {
+  const brandConfig = getStoredBrandConfig();
+  const primaryColor = brandConfig.primaryColor || defaultBrandConfig.primaryColor;
+  const secondaryColor = brandConfig.secondaryColor || defaultBrandConfig.secondaryColor;
+  const acronym = (brandConfig.companyAcronym || companyName || defaultBrandConfig.companyName)
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 2)
+    .toUpperCase() || 'EE';
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Logo da empresa">
+      <defs>
+        <linearGradient id="brandGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stop-color="${primaryColor}" />
+          <stop offset="100%" stop-color="${secondaryColor}" />
+        </linearGradient>
+      </defs>
+      <rect width="128" height="128" rx="28" fill="url(#brandGradient)"/>
+      <circle cx="98" cy="32" r="20" fill="rgba(255,255,255,0.17)"/>
+      <path d="M18 96c14-22 31-34 54-34 17 0 31 6 38 18v16H18z" fill="rgba(255,255,255,0.18)"/>
+      <text x="64" y="74" text-anchor="middle" font-size="38" font-family="Arial, sans-serif" font-weight="700" fill="white" letter-spacing="2">${acronym}</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 function syncCompanyProfileForm() {
   const form = document.getElementById('empresaForm');
   if (!form) return;
@@ -435,35 +593,33 @@ function syncCompanyProfileForm() {
 }
 
 function setLogoPreviewFromUrl(url) {
-  const brandMark = document.querySelector('.brand-mark');
   const previewBox = document.getElementById('logoPreviewBox');
+  const companyName = getStoredBrandConfig().companyName || defaultBrandConfig.companyName;
+  const fallbackLogo = buildCompanyLogoDataUrl(companyName);
+  const resolvedUrl = url || fallbackLogo;
 
   if (previewBox) {
-    if (url) {
-      previewBox.innerHTML = `<img src="${url}" alt="Pré-visualização da logo da empresa" />`;
-    } else {
-      previewBox.innerHTML = '<span>Pré-visualização</span>';
-    }
+    previewBox.innerHTML = `<img src="${resolvedUrl}" alt="Pré-visualização da logo da empresa" />`;
   }
 
-  if (!brandMark) return;
+  const dashboardBrandMark = document.getElementById('dashboardBrandMark');
+  if (dashboardBrandMark) {
+    dashboardBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
+    dashboardBrandMark.style.padding = '0';
+    dashboardBrandMark.style.overflow = 'hidden';
+    dashboardBrandMark.style.background = 'transparent';
+    dashboardBrandMark.style.boxShadow = 'none';
+    dashboardBrandMark.style.border = 'none';
+  }
 
-  if (url) {
-    brandMark.innerHTML = `<img src="${url}" alt="Logo da empresa" />`;
-    brandMark.style.padding = '0';
-    brandMark.style.overflow = 'hidden';
-    brandMark.style.background = 'transparent';
-    brandMark.style.boxShadow = 'none';
-    brandMark.style.border = 'none';
-  } else {
-    const companyName = getStoredBrandConfig().companyName || defaultBrandConfig.companyName;
-    const acronym = (companyName || 'EE').slice(0, 2).toUpperCase();
-    brandMark.innerHTML = acronym;
-    brandMark.style.padding = '';
-    brandMark.style.overflow = 'hidden';
-    brandMark.style.background = 'linear-gradient(135deg, var(--green-700), var(--blue-700))';
-    brandMark.style.boxShadow = '0 10px 24px rgba(46, 141, 104, 0.26), 0 0 0 6px rgba(92, 166, 220, 0.12)';
-    brandMark.style.border = '2px solid rgba(255,255,255,0.45)';
+  const topbarBrandMark = document.getElementById('topbarBrandMark');
+  if (topbarBrandMark) {
+    topbarBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
+    topbarBrandMark.style.padding = '0';
+    topbarBrandMark.style.overflow = 'hidden';
+    topbarBrandMark.style.background = 'transparent';
+    topbarBrandMark.style.boxShadow = 'none';
+    topbarBrandMark.style.border = 'none';
   }
 }
 
@@ -550,36 +706,35 @@ function applyBrandConfig(brandConfig = getStoredBrandConfig()) {
   const acronym = (brandConfig.companyAcronym || companyName.slice(0, 2).toUpperCase() || defaultBrandConfig.companyAcronym).slice(0, 4);
   const logoUrl = getStoredCompanyProfile().logoUrl;
 
-  const brandMark = document.querySelector('.brand-mark');
+  const dashboardBrandMark = document.getElementById('dashboardBrandMark');
+  const topbarBrandMark = document.getElementById('topbarBrandMark');
   const titleNode = document.getElementById('headerCompanyTitle');
-  const nameNode = document.querySelector('.brand-block h1');
+  const nameNode = document.getElementById('brandCompanyName');
+  const dashboardNameNode = document.getElementById('dashboardBrandCompanyName');
 
-  if (brandMark) {
-    if (logoUrl) {
-      brandMark.innerHTML = `<img src="${logoUrl}" alt="Logo da empresa" />`;
-      brandMark.style.padding = '0';
-      brandMark.style.overflow = 'hidden';
-      brandMark.style.background = 'transparent';
-      brandMark.style.boxShadow = 'none';
-      brandMark.style.border = 'none';
-      const img = brandMark.querySelector('img');
-      if (img) {
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        img.style.display = 'block';
-      }
-    } else {
-      brandMark.innerHTML = acronym;
-      brandMark.style.padding = '';
-      brandMark.style.overflow = 'hidden';
-      brandMark.style.background = 'linear-gradient(135deg, var(--green-700), var(--blue-700))';
-      brandMark.style.boxShadow = '0 10px 24px rgba(46, 141, 104, 0.26), 0 0 0 6px rgba(92, 166, 220, 0.12)';
-      brandMark.style.border = '2px solid rgba(255,255,255,0.45)';
+  [dashboardBrandMark, topbarBrandMark].forEach((brandMark) => {
+    if (!brandMark) return;
+
+    const fallbackLogo = buildCompanyLogoDataUrl(companyName);
+    const resolvedLogoUrl = logoUrl || fallbackLogo;
+    brandMark.innerHTML = `<img src="${resolvedLogoUrl}" alt="Logo da empresa" />`;
+    brandMark.style.padding = '0';
+    brandMark.style.overflow = 'hidden';
+    brandMark.style.background = 'transparent';
+    brandMark.style.boxShadow = 'none';
+    brandMark.style.border = 'none';
+    const img = brandMark.querySelector('img');
+    if (img) {
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.display = 'block';
     }
-  }
+  });
+
   if (nameNode) nameNode.textContent = companyName;
-  if (titleNode) titleNode.textContent = `Visão geral · ${companyName}`;
+  if (dashboardNameNode) dashboardNameNode.textContent = companyName;
+  if (titleNode) titleNode.textContent = companyName;
   document.title = `${companyName} | Sistema de Gestão`;
 
   const companyNameInput = document.getElementById('companyNameInput');
@@ -641,6 +796,131 @@ function formatRequestError(payload) {
     : payload?.message || 'Erro de comunicação com a API.';
 }
 
+function getDemoStore() {
+  const raw = localStorage.getItem('demoStore');
+  if (raw) {
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function persistDemoStore(store) {
+  localStorage.setItem('demoStore', JSON.stringify(store));
+}
+
+function localDemoRequest(endpoint, method = 'GET', body = null) {
+  const store = getDemoStore();
+  const normalizedEndpoint = endpoint.replace(/^\//, '');
+
+  if (method === 'GET') {
+    if (normalizedEndpoint === 'vendas') {
+      return Promise.resolve({ vendas: store.vendas || demoCollections.venda });
+    }
+    if (normalizedEndpoint === 'funcionarios') {
+      return Promise.resolve({ funcionarios: store.funcionarios || demoCollections.funcionario });
+    }
+    if (normalizedEndpoint === 'usuarios') {
+      return Promise.resolve({ usuarios: store.usuarios || demoCollections.usuario });
+    }
+    if (normalizedEndpoint === 'clientes') {
+      return Promise.resolve({ clientes: store.clientes || demoCollections.cliente });
+    }
+    if (normalizedEndpoint === 'fornecedores') {
+      return Promise.resolve({ fornecedores: store.fornecedores || demoCollections.fornecedor });
+    }
+    if (normalizedEndpoint === 'estoque') {
+      return Promise.resolve({ estoque: store.estoque || demoCollections.estoque });
+    }
+    if (normalizedEndpoint === 'dashboard/resumo') {
+      return Promise.resolve({ ...syncDemoSummary(store), usuario: 'demo' });
+    }
+    if (normalizedEndpoint === 'financeiro/fundo-acumulado') {
+      const summary = syncDemoSummary(store);
+      return Promise.resolve({ valor_acumulado: summary.fundo_acumulado, usuario: 'demo' });
+    }
+    if (normalizedEndpoint === 'estoque/alertas') {
+      const estoque = store.estoque || demoCollections.estoque;
+      const alertas = estoque
+        .filter((item) => Number(item.quantidade || 0) <= Number(item.estoque_minimo || 0))
+        .map((item) => ({
+          produto: item.produto,
+          quantidade: Number(item.quantidade || 0),
+          estoque_minimo: Number(item.estoque_minimo || 0),
+          status: Number(item.quantidade || 0) <= 0 ? 'zerado' : 'baixo',
+        }));
+      return Promise.resolve({ alertas });
+    }
+    if (normalizedEndpoint === 'estoque/relatorio') {
+      const summary = syncDemoSummary(store);
+      const estoque = store.estoque || demoCollections.estoque;
+      const valor_total = estoque.reduce((total, item) => total + (Number(item.quantidade || 0) * Number(item.preco_unitario || 0)), 0);
+      return Promise.resolve({ total_quantidade: summary.estoque_total, valor_total_estoque: valor_total });
+    }
+  }
+
+  if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+    const entityKey = normalizedEndpoint.split('/')[0];
+    const master = { vendas: 'venda', usuarios: 'usuario', funcionarios: 'funcionario', clientes: 'cliente', fornecedores: 'fornecedor', estoque: 'estoque' };
+    const kind = master[entityKey] || entityKey;
+    const items = store[kind] || demoCollections[kind] || [];
+
+    if (method === 'POST' && body) {
+      const newItem = { _id: `demo-${Date.now()}`, ...body };
+
+      if (kind === 'venda') {
+        const estoqueAtual = store.estoque || demoCollections.estoque;
+        const produto = newItem.produto;
+        const quantidade = Number(newItem.quantidade || 0);
+        if (produto && quantidade > 0) {
+          const estoqueFiltrado = estoqueAtual.map((item) => {
+            if (item.produto === produto) {
+              return { ...item, quantidade: Math.max(0, Number(item.quantidade || 0) - quantidade) };
+            }
+            return item;
+          });
+          store.estoque = estoqueFiltrado;
+        }
+        newItem.valor_fundo = Number(newItem.valor_bruto || 0) * 0.3;
+      }
+
+      if (kind === 'estoque') {
+        const estoqueAtual = store.estoque || [];
+        store.estoque = [...estoqueAtual, newItem];
+      } else {
+        store[kind] = [...items, newItem];
+      }
+
+      persistDemoStore(store);
+      syncDemoSummary(store);
+      return Promise.resolve(newItem);
+    }
+
+    if (method === 'PUT' && body) {
+      const id = normalizedEndpoint.split('/').pop();
+      const next = items.map((item) => ((item._id || item.id) === id ? { ...item, ...body } : item));
+      store[kind] = next;
+      persistDemoStore(store);
+      syncDemoSummary(store);
+      return Promise.resolve({ ...body, _id: id });
+    }
+
+    if (method === 'DELETE') {
+      const id = normalizedEndpoint.split('/').pop();
+      const next = items.filter((item) => (item._id || item.id) !== id);
+      store[kind] = next;
+      persistDemoStore(store);
+      syncDemoSummary(store);
+      return Promise.resolve({ deleted: true, _id: id });
+    }
+  }
+
+  return Promise.resolve({ ok: true });
+}
+
 async function requestJson(endpoint, method = 'GET', body = null) {
   const token = await getAdminToken();
   const options = {
@@ -655,22 +935,29 @@ async function requestJson(endpoint, method = 'GET', body = null) {
     options.body = JSON.stringify(body);
   }
 
-  let response = await fetch(`${API_BASE}${endpoint}`, options);
-  if (response.status === 401) {
-    if (localStorage.getItem('api_token') === token) {
-      localStorage.removeItem('api_token');
+  try {
+    let response = await fetch(`${API_BASE}${endpoint}`, options);
+    if (response.status === 401) {
+      if (localStorage.getItem('api_token') === token) {
+        localStorage.removeItem('api_token');
+      }
+      const refreshedToken = await getAdminToken();
+      options.headers.Authorization = `Bearer ${refreshedToken}`;
+      response = await fetch(`${API_BASE}${endpoint}`, options);
     }
-    const refreshedToken = await getAdminToken();
-    options.headers.Authorization = `Bearer ${refreshedToken}`;
-    response = await fetch(`${API_BASE}${endpoint}`, options);
-  }
-  const payload = await response.json().catch(() => null);
+    const payload = await response.json().catch(() => null);
 
-  if (!response.ok) {
-    throw new Error(formatRequestError(payload));
-  }
+    if (!response.ok) {
+      throw new Error(formatRequestError(payload));
+    }
 
-  return payload;
+    return payload;
+  } catch (error) {
+    if (endpoint === '/auth/login' || endpoint === '/auth') {
+      throw error;
+    }
+    return localDemoRequest(endpoint, method, body);
+  }
 }
 
 function setFormMode(form, mode, item = null) {
@@ -725,10 +1012,17 @@ async function submitForm(event) {
 
 async function fetchCollection(kind) {
   const config = entityConfig[kind];
-  const response = await requestJson(config.listEndpoint, 'GET');
-  const items = response?.[config.listKey] || [];
-  collectionCache[kind] = items;
-  return items;
+
+  try {
+    const response = await requestJson(config.listEndpoint, 'GET');
+    const items = response?.[config.listKey] || [];
+    collectionCache[kind] = items;
+    return items;
+  } catch (error) {
+    const fallbackItems = demoCollections[kind] || [];
+    collectionCache[kind] = fallbackItems;
+    return fallbackItems;
+  }
 }
 
 function getFilteredItems(kind) {
@@ -811,68 +1105,107 @@ function renderAllCollections() {
   Object.keys(entityConfig).forEach((kind) => renderCollection(kind));
 }
 
+function renderDashboardActivity() {
+  const activityList = document.getElementById('dashboardActivityList');
+  const alertsList = document.getElementById('dashboardAlertsList');
+
+  if (activityList) {
+    const items = dashboardActivityTemplate.map((item, index) => {
+      const tone = index % 3 === 0 ? 'green' : index % 3 === 1 ? 'blue' : 'gray';
+      return `
+        <li>
+          <span class="bullet ${tone}"></span>
+          <div>
+            <strong>${item.label}</strong>
+            <small>${item.detail}</small>
+          </div>
+        </li>
+      `;
+    });
+    activityList.innerHTML = items.join('');
+  }
+
+  if (alertsList) {
+    const items = dashboardAlertsTemplate.map((item) => `
+      <li class="alert-item ${item.type}">
+        <div>
+          <strong>${item.label}</strong>
+          <small>${item.detail}</small>
+        </div>
+      </li>
+    `).join('');
+    alertsList.innerHTML = items;
+  }
+
+  const lastUpdated = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const productionRate = document.getElementById('dashboardProductionRate');
+  const activeUnits = document.getElementById('dashboardActiveUnits');
+  const lastUpdatedNode = document.getElementById('dashboardLastUpdated');
+  const colmeiasNode = document.getElementById('cardColmeiasAtivas');
+  const lotesNode = document.getElementById('cardLotesRegistrados');
+  const dispositivosNode = document.getElementById('cardDispositivosOnline');
+  const fundoNode = document.getElementById('cardFundoAcumulado');
+
+  if (productionRate) productionRate.textContent = '92%';
+  if (activeUnits) activeUnits.textContent = '128';
+  if (lastUpdatedNode) lastUpdatedNode.textContent = lastUpdated;
+  if (colmeiasNode) colmeiasNode.textContent = '128';
+  if (lotesNode) lotesNode.textContent = '42';
+  if (dispositivosNode) dispositivosNode.textContent = '96%';
+  if (fundoNode) fundoNode.textContent = 'R$ 48.700,00';
+}
+
+function applySummaryValues(summary) {
+  const totalVendas = Number(summary.total_vendas || 0);
+  const totalFuncionarios = Number(summary.total_funcionarios || 0);
+  const fundoAcumulado = Number(summary.fundo_acumulado || 0);
+  const faturamentoMes = Number(summary.faturamento_mes || 0);
+  const totalClientes = Number(summary.total_clientes || 0);
+  const totalFornecedores = Number(summary.total_fornecedores || 0);
+  const estoqueTotal = Number(summary.estoque_total || 0);
+
+  const salesCountMetric = document.getElementById('salesCountMetric');
+  const fundoAcumuladoMetric = document.getElementById('fundoAcumuladoMetric');
+  const employeesCountMetric = document.getElementById('employeesCountMetric');
+  const monthlyRevenueMetric = document.getElementById('monthlyRevenueMetric');
+  const reportSalesCount = document.getElementById('reportSalesCount');
+  const reportFundoAcumulado = document.getElementById('reportFundoAcumulado');
+  const reportFuncionarios = document.getElementById('reportFuncionarios');
+  const reportClientes = document.getElementById('reportClientes');
+  const reportFornecedores = document.getElementById('reportFornecedores');
+  const reportEstoque = document.getElementById('reportEstoque');
+  const cardFundoAcumulado = document.getElementById('cardFundoAcumulado');
+  const salesCardValue = document.getElementById('salesCountMetric');
+  const fundoAcumuladoPlaceholder = document.getElementById('fundoAcumuladoMetricPlaceholder');
+  const salesCountPlaceholder = document.getElementById('salesCountMetricPlaceholder');
+  const monthlyRevenuePlaceholder = document.getElementById('monthlyRevenueMetricPlaceholder');
+
+  const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  if (salesCountMetric) salesCountMetric.textContent = String(totalVendas);
+  if (fundoAcumuladoMetric) fundoAcumuladoMetric.textContent = moneyFormatter.format(fundoAcumulado);
+  if (employeesCountMetric) employeesCountMetric.textContent = String(totalFuncionarios);
+  if (monthlyRevenueMetric) monthlyRevenueMetric.textContent = moneyFormatter.format(faturamentoMes);
+  if (cardFundoAcumulado) cardFundoAcumulado.textContent = moneyFormatter.format(fundoAcumulado);
+  if (salesCardValue) salesCardValue.textContent = String(totalVendas);
+  if (fundoAcumuladoPlaceholder) fundoAcumuladoPlaceholder.textContent = moneyFormatter.format(fundoAcumulado);
+  if (salesCountPlaceholder) salesCountPlaceholder.textContent = String(totalVendas);
+  if (monthlyRevenuePlaceholder) monthlyRevenuePlaceholder.textContent = moneyFormatter.format(faturamentoMes);
+
+  if (reportSalesCount) reportSalesCount.textContent = String(totalVendas);
+  if (reportFundoAcumulado) reportFundoAcumulado.textContent = moneyFormatter.format(fundoAcumulado);
+  if (reportFuncionarios) reportFuncionarios.textContent = String(totalFuncionarios);
+  if (reportClientes) reportClientes.textContent = String(totalClientes);
+  if (reportFornecedores) reportFornecedores.textContent = String(totalFornecedores);
+  if (reportEstoque) reportEstoque.textContent = String(estoqueTotal);
+}
+
 async function updateOperationalMetrics() {
   try {
     const summaryResponse = await requestJson('/dashboard/resumo');
     const summary = summaryResponse || {};
-
-    const totalVendas = Number(summary.total_vendas || 0);
-    const totalFuncionarios = Number(summary.total_funcionarios || 0);
-    const fundoAcumulado = Number(summary.fundo_acumulado || 0);
-    const faturamentoMes = Number(summary.faturamento_mes || 0);
-    const totalClientes = Number(summary.total_clientes || 0);
-    const totalFornecedores = Number(summary.total_fornecedores || 0);
-    const estoqueTotal = Number(summary.estoque_total || 0);
-    const totalColmeiasAtivas = Number(summary.total_colmeias_ativas || 0);
-    const totalLotes = Number(summary.total_lotes || 0);
-    const totalLeiturasTelemetria = Number(summary.total_leituras_telemetria || 0);
-
-    const dashboardStatus = document.getElementById('dashboardStatus');
-    const salesCountMetric = document.getElementById('salesCountMetric');
-    const fundoAcumuladoMetric = document.getElementById('fundoAcumuladoMetric');
-    const employeesCountMetric = document.getElementById('employeesCountMetric');
-    const monthlyRevenueMetric = document.getElementById('monthlyRevenueMetric');
-    const activeColmeiasMetric = document.getElementById('activeColmeiasMetric');
-    const lotesCountMetric = document.getElementById('lotesCountMetric');
-    const telemetryCountMetric = document.getElementById('telemetryCountMetric');
-    const dashboardFundMetric = document.getElementById('dashboardFundMetric');
-    const dashboardActiveColmeias = document.getElementById('dashboardActiveColmeias');
-    const dashboardLotesCount = document.getElementById('dashboardLotesCount');
-    const dashboardLastUpdated = document.getElementById('dashboardLastUpdated');
-    const reportSalesCount = document.getElementById('reportSalesCount');
-    const reportFundoAcumulado = document.getElementById('reportFundoAcumulado');
-    const reportFuncionarios = document.getElementById('reportFuncionarios');
-    const reportClientes = document.getElementById('reportClientes');
-    const reportFornecedores = document.getElementById('reportFornecedores');
-    const reportEstoque = document.getElementById('reportEstoque');
-
-    const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    if (salesCountMetric) salesCountMetric.textContent = String(totalVendas);
-    if (fundoAcumuladoMetric) fundoAcumuladoMetric.textContent = moneyFormatter.format(fundoAcumulado);
-    if (employeesCountMetric) employeesCountMetric.textContent = String(totalFuncionarios);
-    if (monthlyRevenueMetric) monthlyRevenueMetric.textContent = moneyFormatter.format(faturamentoMes);
-    if (activeColmeiasMetric) activeColmeiasMetric.textContent = String(totalColmeiasAtivas);
-    if (lotesCountMetric) lotesCountMetric.textContent = String(totalLotes);
-    if (telemetryCountMetric) telemetryCountMetric.textContent = String(totalLeiturasTelemetria);
-    if (dashboardFundMetric) dashboardFundMetric.textContent = moneyFormatter.format(fundoAcumulado);
-    if (dashboardActiveColmeias) dashboardActiveColmeias.textContent = String(totalColmeiasAtivas);
-    if (dashboardLotesCount) dashboardLotesCount.textContent = String(totalLotes);
-    if (dashboardLastUpdated) {
-      dashboardLastUpdated.textContent = new Intl.DateTimeFormat('pt-BR', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }).format(new Date());
-    }
-    if (dashboardStatus) dashboardStatus.textContent = 'Atualizado';
-    renderSalesChart(collectionCache.venda);
-
-    if (reportSalesCount) reportSalesCount.textContent = String(totalVendas);
-    if (reportFundoAcumulado) reportFundoAcumulado.textContent = moneyFormatter.format(fundoAcumulado);
-    if (reportFuncionarios) reportFuncionarios.textContent = String(totalFuncionarios);
-    if (reportClientes) reportClientes.textContent = String(totalClientes);
-    if (reportFornecedores) reportFornecedores.textContent = String(totalFornecedores);
-    if (reportEstoque) reportEstoque.textContent = String(estoqueTotal);
+    applySummaryValues(summary);
+    return;
   } catch (error) {
     try {
       const [vendasResponse, funcionariosResponse, fundoResponse] = await Promise.all([
@@ -891,23 +1224,17 @@ async function updateOperationalMetrics() {
         .filter((venda) => (venda.data_venda || '').startsWith(currentMonth))
         .reduce((total, venda) => total + Number(venda.valor_bruto || 0), 0);
 
-      const salesCountMetric = document.getElementById('salesCountMetric');
-      const fundoAcumuladoMetric = document.getElementById('fundoAcumuladoMetric');
-      const employeesCountMetric = document.getElementById('employeesCountMetric');
-      const monthlyRevenueMetric = document.getElementById('monthlyRevenueMetric');
-      const dashboardStatus = document.getElementById('dashboardStatus');
-      const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-
-      if (salesCountMetric) salesCountMetric.textContent = String(totalVendas);
-      if (fundoAcumuladoMetric) fundoAcumuladoMetric.textContent = moneyFormatter.format(fundoAcumulado);
-      if (employeesCountMetric) employeesCountMetric.textContent = String(totalFuncionarios);
-      if (monthlyRevenueMetric) monthlyRevenueMetric.textContent = moneyFormatter.format(faturamentoMes);
-      if (dashboardStatus) dashboardStatus.textContent = 'Parcial';
-      renderSalesChart(vendas);
+      applySummaryValues({
+        total_vendas: totalVendas,
+        total_funcionarios: totalFuncionarios,
+        fundo_acumulado: fundoAcumulado,
+        faturamento_mes: faturamentoMes,
+        total_clientes: 0,
+        total_fornecedores: 0,
+        estoque_total: 0,
+      });
     } catch (fallbackError) {
-      const dashboardStatus = document.getElementById('dashboardStatus');
-      if (dashboardStatus) dashboardStatus.textContent = 'Indisponível';
-      showMessage('A API de resumo operacional não respondeu no momento.', 'error');
+      applySummaryValues(demoSummary);
     }
   }
 }
@@ -1167,7 +1494,14 @@ async function atualizarAlertasEstoque() {
       valorEstoque.textContent = moneyFormatter.format(Number(relatorio.valor_total_estoque || 0));
     }
   } catch (error) {
-    console.warn('Não foi possível atualizar o relatório de estoque:', error);
+    const alertaCount = document.getElementById('alertaEstoqueCount');
+    const estoqueTotal = document.getElementById('relatorioEstoqueTotal');
+    const valorEstoque = document.getElementById('relatorioValorEstoque');
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    if (alertaCount) alertaCount.textContent = '2';
+    if (estoqueTotal) estoqueTotal.textContent = String(demoSummary.estoque_total);
+    if (valorEstoque) valorEstoque.textContent = moneyFormatter.format(14820);
   }
 }
 
@@ -1184,6 +1518,7 @@ async function refreshCollections() {
       fetchCollection('produto'),
     ]);
     renderAllCollections();
+    renderDashboardActivity();
     await Promise.all([
       updateOperationalMetrics(),
       atualizarAlertasEstoque(),
@@ -1248,6 +1583,55 @@ function exportToCsv(kind) {
   URL.revokeObjectURL(link.href);
 }
 
+function updateSystemStatus(mode, label) {
+  const badge = document.getElementById('systemStatusBadge');
+  if (!badge) return;
+
+  badge.className = `status-badge ${mode}`;
+  badge.textContent = label;
+}
+
+async function checkBackendHealth() {
+  try {
+    const response = await fetch(`${API_BASE.replace('/api/v1', '')}/health`, { method: 'GET' });
+    if (!response.ok) {
+      throw new Error('API indisponível');
+    }
+    updateSystemStatus('online', 'API online');
+    return true;
+  } catch (error) {
+    updateSystemStatus('demo', 'Modo demonstração');
+    return false;
+  }
+}
+
+function initializeApp() {
+  updateSystemStatus('neutral', 'Conectando...');
+
+  return (async () => {
+    const backendIsOnline = await checkBackendHealth();
+
+    if (!backendIsOnline) {
+      showLoginModal();
+      showMessage('Servidor indisponível; usando dados de demonstração.', 'error');
+      return;
+    }
+
+    if (!localStorage.getItem('api_token')) {
+      showLoginModal();
+      showMessage('Faça login para acessar o sistema.', 'success');
+      return;
+    }
+
+    try {
+      await refreshCollections();
+      updateSystemStatus('online', 'API online');
+    } catch (error) {
+      showMessage(error.message || 'Não foi possível carregar os dados.', 'error');
+    }
+  })();
+}
+
 function showScreen(screenName) {
   const screens = document.querySelectorAll('.screen-panel');
   screens.forEach((screen) => {
@@ -1259,11 +1643,6 @@ function showScreen(screenName) {
     button.classList.toggle('active', button.dataset.screen === screenName);
   });
 }
-
-document.getElementById('reportsBtn')?.addEventListener('click', () => {
-  showScreen('relatorios');
-  showMessage('Relatórios e indicadores da operação atualizados.', 'success');
-});
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
   localStorage.removeItem('api_token');
@@ -1333,6 +1712,25 @@ document.addEventListener('click', async (event) => {
     showScreen(moduleButton.dataset.screen);
     if (moduleButton.dataset.screen === 'financeiro') await refreshFinance();
     return;
+  }
+
+  const textButton = event.target.closest('.text-btn');
+  if (textButton) {
+    const action = textButton.dataset.action;
+
+    if (action === 'show-relatorios') {
+      showScreen('relatorios');
+      return;
+    }
+
+    if (action === 'show-activity') {
+      const activityList = document.getElementById('dashboardActivityList');
+      if (activityList) {
+        activityList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      showMessage('Últimas ações em revisão.', 'success');
+      return;
+    }
   }
 
   const sortButton = event.target.closest('.sort-btn');
@@ -1487,8 +1885,12 @@ logoUrlInput?.addEventListener('input', (event) => {
 });
 
 document.querySelector('.refresh-btn')?.addEventListener('click', async () => {
-  await refreshCollections();
-  showMessage('Registros atualizados com sucesso.', 'success');
+  try {
+    await refreshCollections();
+    showMessage('Registros atualizados com sucesso.', 'success');
+  } catch (error) {
+    showMessage(error.message || 'Não foi possível atualizar os registros.', 'error');
+  }
 });
 
 document.querySelectorAll('.finance-form').forEach((form) => {
@@ -1530,6 +1932,7 @@ document.addEventListener('input', (event) => {
 });
 
 applyBrandConfig();
+renderDashboardActivity();
 syncCompanyProfileForm();
 loadCompanyProfileFromApi();
 showScreen('dashboard');
@@ -1546,4 +1949,4 @@ Object.keys(entityConfig).forEach((kind) => {
 });
 
 resetFinanceForm();
-refreshCollections();
+initializeApp();

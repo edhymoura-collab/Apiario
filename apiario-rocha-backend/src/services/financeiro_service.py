@@ -5,6 +5,22 @@ from typing import Any
 from src.config.database import database
 
 
+async def _validar_estoque_disponivel(produto: str | None, quantidade: int | None) -> None:
+    if not produto or quantidade is None or quantidade <= 0:
+        return
+
+    item_estoque = await database.find_one("estoque", {"produto": produto})
+    if item_estoque is None:
+        raise ValueError(f"Produto '{produto}' não encontrado em estoque.")
+
+    quantidade_atual = int(item_estoque.get("quantidade", 0) or 0)
+    if quantidade_atual < int(quantidade):
+        raise ValueError(
+            f"Estoque insuficiente para '{produto}'. Disponível: {quantidade_atual}. "
+            f"Solicitado: {quantidade}."
+        )
+
+
 async def _baixa_estoque_automatica(produto: str | None, quantidade: int | None) -> None:
     if not produto or not quantidade or quantidade <= 0:
         return
@@ -35,6 +51,8 @@ def calcular_divisao(valor_bruto: float) -> dict[str, float]:
 
 
 async def registrar_venda(payload: dict[str, Any]) -> dict[str, Any]:
+    await _validar_estoque_disponivel(payload.get("produto"), payload.get("quantidade"))
+
     divisao = calcular_divisao(payload["valor_bruto"])
     documento = {
         "codigo_venda": payload["codigo_venda"],

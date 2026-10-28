@@ -1,9 +1,10 @@
 import asyncio
 
+from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.testclient import TestClient
 
 from src.auth.passwords import hash_password, is_password_hash, verify_password
-from src.auth.security import get_current_user
+from src.auth.security import create_access_token, get_current_user
 from src.config.database import SQLiteDatabase, database
 from src.config.settings import get_settings
 from src.main import app
@@ -44,6 +45,27 @@ def test_login_uses_configured_credentials_and_rejects_old_defaults(monkeypatch)
     assert valid_response.status_code == 200
     assert "access_token" in valid_response.json()
     assert old_default_response.status_code == 401
+
+
+def test_login_accepts_short_configured_admin_password(monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "admin_username", "admin")
+    monkeypatch.setattr(settings, "admin_password", "admin")
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin", "password": "admin"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["perfil"] == "admin"
+
+
+def test_get_current_user_decodes_valid_bearer_token():
+    token = create_access_token("admin", perfil="admin")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+
+    assert get_current_user(credentials) == "admin"
 
 
 def test_user_password_is_hashed_and_never_returned_by_api(monkeypatch, tmp_path):
