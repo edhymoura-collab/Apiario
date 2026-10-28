@@ -1457,6 +1457,25 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  const textButton = event.target.closest('.text-btn');
+  if (textButton) {
+    const action = textButton.dataset.action;
+
+    if (action === 'show-relatorios') {
+      showScreen('relatorios');
+      return;
+    }
+
+    if (action === 'show-activity') {
+      const activityList = document.getElementById('dashboardActivityList');
+      if (activityList) {
+        activityList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      showMessage('Últimas ações em revisão.', 'success');
+      return;
+    }
+  }
+
   const sortButton = event.target.closest('.sort-btn');
   if (sortButton) {
     const { kind, key } = sortButton.dataset;

@@ -150,6 +150,33 @@ def test_dashboard_resumo_fallback_quando_banco_falha(monkeypatch):
     assert data["fundo_acumulado"] == 48700
 
 
+def test_financeiro_root_alias_returns_summary(monkeypatch):
+    async def fake_obter_resumo_operacional():
+        return {
+            "total_vendas": 42,
+            "total_funcionarios": 10,
+            "fundo_acumulado": 3500,
+            "faturamento_mes": 2800,
+            "total_clientes": 8,
+            "total_fornecedores": 5,
+            "estoque_total": 120,
+        }
+
+    monkeypatch.setattr("src.routes.financeiro.obter_resumo_operacional", fake_obter_resumo_operacional)
+    app.dependency_overrides[get_current_user] = lambda: "admin"
+
+    try:
+        response = client.get("/api/v1/financeiro")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["usuario"] == "admin"
+    assert data["total_vendas"] == 42
+    assert data["fundo_acumulado"] == 3500
+
+
 def test_listar_vendas_fallback_quando_banco_falha(monkeypatch):
     async def fake_listar_vendas():
         raise RuntimeError("MongoDB indisponível")

@@ -165,6 +165,15 @@ async def excluir_venda_route(venda_id: str, usuario: str = Depends(get_current_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao excluir venda") from exc
 
 
+@router.get("/financeiro")
+async def financeiro_root_route(usuario: str = Depends(get_current_user)):
+    try:
+        resumo = await obter_resumo_operacional()
+        return {"usuario": usuario, **resumo}
+    except Exception:
+        return {"usuario": usuario, **_DEMO_SUMMARY}
+
+
 @router.get("/financeiro/fundo-acumulado")
 async def consultar_fundo_route(usuario: str = Depends(get_current_user)):
     try:
