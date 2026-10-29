@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Empresa Exemplo | Sistema de Gestão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css?v=finance-3" />
+  </head>
+  <body>
+    <dialog id="loginDialog" class="auth-dialog" aria-labelledby="loginTitle">
+      <form id="loginForm" class="register-form">
+        <h2 id="loginTitle">Acesso ao sistema</h2>
+        <label for="loginUsername">Usuário administrador</label>
+        <input id="loginUsername" name="username" type="text" autocomplete="username" required />
+        <label for="loginPassword">Senha</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+        <p id="loginError" class="status-message error" role="alert"></p>
+        <button type="submit" class="primary-btn">Entrar</button>
+      </form>
+    </dialog>
+
+    <div id="loginModal" class="login-modal" aria-modal="true" role="dialog">
+      <div class="login-card panel">
+        <div class="login-branding">
+          <div class="login-header">
+            <div class="brand-mark" aria-label="Logo da empresa">AR</div>
+            <div>
+              <p class="eyebrow soft">Acesso ao sistema</p>
+              <h2>Entrar na operação</h2>
+            </div>
+          </div>
+          <div class="login-highlight">
+            <span>Gestão apícola</span>
+            <strong>Operação em tempo real</strong>
+          </div>
+        </div>
+
+        <p class="login-helper">Credenciais padrão: admin / apiario123</p>
+      </div>
+    </div>
+    <div class="app-shell">
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="topbar-branding">
+            <div class="brand-block">
+              <div class="brand-mark" id="topbarBrandMark" aria-label="Logo da empresa">AR</div>
+              <div class="brand-copy">
+                <p class="eyebrow soft">Painel operacional</p>
+                <h1 id="brandCompanyName">Empresa Exemplo</h1>
+              </div>
+            </div>
+            <div class="topbar-summary">
+              <h2 id="headerCompanyTitle">Empresa Exemplo</h2>
+            </div>
+          </div>
+
+          <div class="topbar-actions">
+            <span id="systemStatusBadge" class="status-badge neutral">Conectando...</span>
+            <button id="logoutBtn" class="ghost-btn danger-btn" type="button">Sair</button>
+          </div>
+        </header>
+
+        <nav class="module-tabs" aria-label="Módulos do sistema">
+          <button class="module-nav-btn active" data-screen="dashboard" type="button">Dashboard</button>
+          <button class="module-nav-btn" data-screen="relatorios" type="button">Relatórios</button>
+          <button class="module-nav-btn" data-screen="empresa" type="button">Empresa</button>
+          <button class="module-nav-btn" data-screen="usuarios" type="button">Usuários</button>
+          <button class="module-nav-btn" data-screen="administradores" type="button">Administradores</button>
+          <button class="module-nav-btn" data-screen="funcionarios" type="button">Funcionários</button>
+          <button class="module-nav-btn" data-screen="clientes" type="button">Clientes</button>
+          <button class="module-nav-btn" data-screen="fornecedores" type="button">Fornecedores</button>
+          <button class="module-nav-btn" data-screen="vendas" type="button">Vendas</button>
+          <button class="module-nav-btn" data-screen="estoque" type="button">Estoque</button>
+          <button class="module-nav-btn" data-screen="produtos" type="button">Produtos</button>
+          <button class="module-nav-btn" data-screen="financeiro" type="button">Financeiro</button>
+          <button class="module-nav-btn" data-screen="colmeias" type="button">Colmeias</button>
+          <button class="module-nav-btn" data-screen="lotes" type="button">Lotes</button>
+          <button class="module-nav-btn" data-screen="telemetria" type="button">Telemetria</button>
+          <button class="module-nav-btn" data-screen="rastreabilidade" type="button">Rastreabilidade</button>
+        </nav>
+
+        <section id="screen-dashboard" class="screen-panel active">
+          <div class="welcome-shell panel">
+            <div class="welcome-copy">
+              <p class="eyebrow soft">Dashboard executivo</p>
+              <h3>Operação em tempo real</h3>
+              <p>Monitore produção, inventário, finanças e atividade comercial em um único painel.</p>
+            </div>
+            <div class="mini-summary">
+              <div>
+                <span>Colmeias ativas</span>
+                <strong id="dashboardActiveColmeias">0</strong>
+              </div>
+              <div>
+                <span>Lotes registrados</span>
+                <strong id="dashboardLotesCount">0</strong>
+              </div>
+              <div>
+                <span>Última atualização</span>
+                <strong id="dashboardLastUpdated">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <section class="summary-grid" id="dashboardOverviewCards">
+            <article class="stat-card green-card">
+              <div class="icon-box">🐝</div>
+              <div>
+                <p>Colmeias ativas</p>
+                <h3 id="activeColmeiasMetric">0</h3>
+              </div>
+            </article>
+
+            <article class="stat-card blue-card">
+              <div class="icon-box">📦</div>
+              <div>
+                <p>Lotes registrados</p>
+                <h3 id="lotesCountMetric">0</h3>
+              </div>
+            </article>
+
+            <article class="stat-card gray-card">
+              <div class="icon-box">📡</div>
+              <div>
+                <p>Leituras de telemetria</p>
+                <h3 id="telemetryCountMetric">0</h3>
+              </div>
+            </article>
+
+            <article class="stat-card accent-card">
+              <div class="icon-box">💰</div>
+              <div>
+                <p>Fundo acumulado</p>
+                <h3 id="dashboardFundMetric">R$ 0,00</h3>
+              </div>
+            </article>
+          </section>
+
+          <section class="insight-grid">
+            <div class="panel highlight-panel">
+              <div class="section-header">
+                <h3>Resumo da operação</h3>
+                <span id="dashboardStatus" class="badge success">Carregando</span>
+              </div>
+
+              <div class="insight-metrics">
+                <div class="metric-tile">
+                  <span>Vendas registradas</span>
+                  <strong id="salesCountMetric">0</strong>
+                </div>
+                <div class="metric-tile">
+                  <span>Fundo acumulado</span>
+                  <strong id="fundoAcumuladoMetric">R$ 0,00</strong>
+                </div>
+                <div class="metric-tile">
+                  <span>Funcionários ativos</span>
+                  <strong id="employeesCountMetric">0</strong>
+                </div>
+                <div class="metric-tile">
+                  <span>Faturamento do mês</span>
+                  <strong id="monthlyRevenueMetric">R$ 0,00</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel analytics-panel">
+              <div class="section-header">
+                <h3>Fluxo de vendas</h3>
+                <button class="text-btn" type="button" data-action="show-relatorios">Ver relatório</button>
+              </div>
+
+              <div class="chart-bars" id="salesChart" role="img" aria-label="Fluxo de vendas dos últimos sete dias">
+              </div>
+            </div>
+          </section>
+
+          <section class="dashboard-secondary-grid">
+            <div class="panel">
+              <div class="section-header">
+                <h3>Atividade recente</h3>
+                <button class="text-btn" type="button" data-action="show-activity">Últimas ações</button>
+              </div>
+              <ul id="dashboardActivityList" class="activity-list"></ul>
+            </div>
+
+            <div class="panel">
+              <div class="section-header">
+                <h3>Alertas operacionais</h3>
+                <span class="badge warning">Ativos</span>
+              </div>
+              <ul id="dashboardAlertsList" class="alert-list"></ul>
+            </div>
+          </section>
+
+        </section>
+
+        <section id="screen-relatorios" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <h3>Relatórios</h3>
+              <span class="badge success">Indicadores</span>
+            </div>
+            <div class="placeholder-grid">
+              <article class="placeholder-card"><h4>Vendas</h4><p>Total de transações registradas.</p><strong id="reportSalesCount">0</strong></article>
+              <article class="placeholder-card"><h4>Fundo acumulado</h4><p>Valor total reservado pela operação.</p><strong id="reportFundoAcumulado">R$ 0,00</strong></article>
+              <article class="placeholder-card"><h4>Funcionários</h4><p>Equipe atual cadastrada.</p><strong id="reportFuncionarios">0</strong></article>
+              <article class="placeholder-card"><h4>Clientes</h4><p>Base de clientes ativos.</p><strong id="reportClientes">0</strong></article>
+              <article class="placeholder-card"><h4>Fornecedores</h4><p>Parceiros e insumos cadastrados.</p><strong id="reportFornecedores">0</strong></article>
+              <article class="placeholder-card"><h4>Estoque</h4><p>Quantidade total em inventário.</p><strong id="reportEstoque">0</strong></article>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-empresa" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <h3>Cadastro da empresa</h3>
+              <span class="badge success">Dados cadastrais</span>
+            </div>
+
+            <form id="empresaForm" class="company-form">
+              <div class="company-form-grid">
+                <label class="full-width">
+                  Logo da empresa
+                  <div class="logo-upload-block">
+                    <div class="logo-preview-box" id="logoPreviewBox">
+                      <span>Pré-visualização</span>
+                    </div>
+                    <div class="logo-upload-controls">
+                      <input type="file" id="logoFileInput" accept="image/*" />
+                      <input type="url" name="logoUrl" id="logoUrlInput" placeholder="https://.../logo.png" />
+                    </div>
+                  </div>
+                </label>
+                <label>
+                  Razão social
+                  <input type="text" name="razaoSocial" placeholder="Razão social" required />
+                </label>
+                <label>
+                  Nome fantasia
+                  <input type="text" name="nomeFantasia" placeholder="Nome fantasia" />
+                </label>
+                <label>
+                  CNPJ
+                  <input type="text" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18" />
+                </label>
+                <label>
+                  Inscrição estadual
+                  <input type="text" name="inscricaoEstadual" placeholder="IE" />
+                </label>
+                <label class="full-width">
+                  Endereço
+                  <input type="text" name="endereco" placeholder="Rua, avenida, logradouro" />
+                </label>
+                <label>
+                  Número
+                  <input type="text" name="numero" placeholder="123" />
+                </label>
+                <label>
+                  Complemento
+                  <input type="text" name="complemento" placeholder="Sala, bloco, apto" />
+                </label>
+                <label>
+                  Bairro
+                  <input type="text" name="bairro" placeholder="Bairro" />
+                </label>
+                <label>
+                  Cidade
+                  <input type="text" name="cidade" placeholder="Cidade" />
+                </label>
+                <label>
+                  Estado
+                  <input type="text" name="estado" maxlength="2" placeholder="SP" />
+                </label>
+                <label>
+                  CEP
+                  <input type="text" name="cep" maxlength="9" placeholder="00000-000" />
+                </label>
+                <label>
+                  Telefone
+                  <input type="tel" name="telefone" placeholder="(11) 99999-9999" />
+                </label>
+                <label>
+                  E-mail corporativo
+                  <input type="email" name="email" placeholder="contato@empresa.com" />
+                </label>
+                <label>
+                  Site
+                  <input type="url" name="site" placeholder="https://www.empresa.com" />
+                </label>
+                <label>
+                  Segmento
+                  <input type="text" name="segmento" placeholder="Agro, varejo, logística..." />
+                </label>
+              </div>
+
+              <div class="company-form-actions">
+                <button type="submit" class="primary-btn">Salvar dados da empresa</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="screen-usuarios" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <h3>Usuários</h3>
+              <span class="badge success">Cadastro</span>
+            </div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Cadastro rápido</span>
+              <span class="mini-pill neutral">Permissões</span>
+            </div>
+            <div class="table-card">
+              <div class="table-card-header">
+                <div class="table-card-tools">
+                  <h4>Usuários cadastrados</h4>
+                  <div class="table-tools-right">
+                    <input class="table-search" data-kind="usuario" type="search" placeholder="Buscar usuários" />
+                    <button class="export-btn" data-kind="usuario" type="button">Exportar CSV</button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Usuário</th><th>Perfil</th><th>Ações</th></tr></thead><tbody id="usuariosTableBody"></tbody></table>
+              </div>
+              <div class="table-footer">
+                <span id="usuariosMeta" class="table-meta">0 registros</span>
+                <div class="pagination"><button class="page-btn" type="button" data-kind="usuario" data-action="prev">Anterior</button><span id="usuariosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="usuario" data-action="next">Próximo</button></div>
+              </div>
+            </div>
+            <div class="secondary-form-row">
+              <form id="usuarioForm" class="register-form" data-kind="usuario" data-create-endpoint="/usuarios/cadastrar" data-update-endpoint="/usuarios">
+                <h4>Usuário</h4>
+                <input type="text" name="nome" placeholder="Nome" required />
+                <input type="email" name="email" placeholder="E-mail" required />
+                <input type="text" name="username" placeholder="Usuário" minlength="3" required />
+                <input type="password" name="password" placeholder="Senha (mínimo de 6 caracteres)" minlength="6" required />
+                <select name="perfil">
+                  <option value="usuario">Usuário</option>
+                  <option value="operador">Operador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+                <button type="submit" class="primary-btn">Salvar usuário</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-administradores" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Administradores</h3><span class="badge success">Controle</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Acesso administrativo</span>
+              <span class="mini-pill neutral">Níveis</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Administradores</h4><div class="table-tools-right"><input class="table-search" data-kind="administrador" type="search" placeholder="Buscar administradores" /><button class="export-btn" data-kind="administrador" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="administradoresTableBody"></tbody></table></div><div class="table-footer"><span id="administradoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="administrador" data-action="prev">Anterior</button><span id="administradoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="administrador" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="adminForm" class="register-form" data-kind="administrador" data-create-endpoint="/administradores/cadastrar" data-update-endpoint="/administradores">
+                <h4>Administrador</h4>
+                <input type="text" name="nome" placeholder="Nome" required />
+                <input type="email" name="email" placeholder="E-mail" required />
+                <input type="text" name="username" placeholder="Usuário" required />
+                <input type="password" name="password" placeholder="Senha" required />
+                <select name="nivel"><option value="admin">Administrador</option><option value="master">Master</option></select>
+                <button type="submit" class="primary-btn">Salvar admin</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-funcionarios" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Funcionários</h3><span class="badge success">Equipe</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Gestão de pessoal</span>
+              <span class="mini-pill neutral">Equipe</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Funcionários</h4><div class="table-tools-right"><input class="table-search" data-kind="funcionario" type="search" placeholder="Buscar funcionários" /><button class="export-btn" data-kind="funcionario" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Cargo</th><th>Departamento</th><th>Salário</th><th>Ações</th></tr></thead><tbody id="funcionariosTableBody"></tbody></table></div><div class="table-footer"><span id="funcionariosMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="funcionario" data-action="prev">Anterior</button><span id="funcionariosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="funcionario" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="funcionarioForm" class="register-form" data-kind="funcionario" data-create-endpoint="/funcionarios/cadastrar" data-update-endpoint="/funcionarios">
+                <h4>Funcionário</h4>
+                <input type="text" name="nome" placeholder="Nome" required />
+                <input type="email" name="email" placeholder="E-mail" required />
+                <input type="text" name="cargo" placeholder="Cargo" required />
+                <input type="text" name="departamento" placeholder="Departamento" required />
+                <input type="number" step="0.01" name="salario" placeholder="Salário" required />
+                <button type="submit" class="primary-btn">Salvar funcionário</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-clientes" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Clientes</h3><span class="badge success">Relacionamento</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Cadastro de clientes</span>
+              <span class="mini-pill neutral">Ativos</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Clientes cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="cliente" type="search" placeholder="Buscar clientes" /><button class="export-btn" data-kind="cliente" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="clientesTableBody"></tbody></table></div><div class="table-footer"><span id="clientesMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="cliente" data-action="prev">Anterior</button><span id="clientesPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="cliente" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="clienteForm" class="register-form" data-kind="cliente" data-create-endpoint="/clientes/cadastrar" data-update-endpoint="/clientes">
+                <h4>Cliente</h4>
+                <input type="text" name="nome" placeholder="Nome/Razão social" required />
+                <input type="email" name="email" placeholder="E-mail" />
+                <input type="tel" name="telefone" placeholder="Telefone" />
+                <input type="text" name="documento" placeholder="CPF/CNPJ" />
+                <input type="text" name="cidade" placeholder="Cidade" />
+                <select name="tipo">
+                  <option value="pf">Pessoa física</option>
+                  <option value="pj">Pessoa jurídica</option>
+                </select>
+                <textarea name="observacoes" rows="3" placeholder="Observações"></textarea>
+                <button type="submit" class="primary-btn">Salvar cliente</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-fornecedores" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Fornecedores</h3><span class="badge success">Parcerias</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Cadastro de fornecedores</span>
+              <span class="mini-pill neutral">Suprimentos</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Fornecedores cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="fornecedor" type="search" placeholder="Buscar fornecedores" /><button class="export-btn" data-kind="fornecedor" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>CNPJ</th><th>Email</th><th>Categoria</th><th>Ações</th></tr></thead><tbody id="fornecedoresTableBody"></tbody></table></div><div class="table-footer"><span id="fornecedoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="fornecedor" data-action="prev">Anterior</button><span id="fornecedoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="fornecedor" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="fornecedorForm" class="register-form" data-kind="fornecedor" data-create-endpoint="/fornecedores/cadastrar" data-update-endpoint="/fornecedores">
+                <h4>Fornecedor</h4>
+                <input type="text" name="nome" placeholder="Nome/Razão social" required />
+                <input type="text" name="cnpj" placeholder="CNPJ" />
+                <input type="email" name="email" placeholder="E-mail" />
+                <input type="tel" name="telefone" placeholder="Telefone" />
+                <input type="text" name="categoria" placeholder="Categoria" />
+                <input type="text" name="cidade" placeholder="Cidade" />
+                <textarea name="observacoes" rows="3" placeholder="Observações"></textarea>
+                <button type="submit" class="primary-btn">Salvar fornecedor</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-vendas" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Vendas</h3><span class="badge success">Fluxo</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Registro de venda</span>
+              <span class="mini-pill neutral">Faturamento</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Vendas</h4><div class="table-tools-right"><input class="table-search" data-kind="venda" type="search" placeholder="Buscar vendas" /><button class="export-btn" data-kind="venda" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Código</th><th>Data</th><th>Pagamento</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="vendasTableBody"></tbody></table></div><div class="table-footer"><span id="vendasMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="venda" data-action="prev">Anterior</button><span id="vendasPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="venda" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="vendaForm" class="register-form" data-kind="venda" data-create-endpoint="/vendas/registrar" data-update-endpoint="/vendas">
+                <h4>Venda</h4>
+                <input type="text" name="codigo_venda" placeholder="Código da venda" required />
+                <input type="date" name="data_venda" required />
+                <select name="forma_pagamento" aria-label="Forma de pagamento da venda" required>
+                  <option value="pix">Pix</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao_credito">Cartão de crédito</option>
+                  <option value="cartao_debito">Cartão de débito</option>
+                  <option value="transferencia">Transferência</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="outro">Outro</option>
+                </select>
+                <input type="text" name="produto" placeholder="Produto" />
+                <input type="number" name="quantidade" min="1" placeholder="Quantidade" />
+                <input type="number" step="0.01" name="valor_bruto" placeholder="Valor bruto" required />
+                <input type="text" name="tipo_venda" placeholder="Tipo da venda" required />
+                <button type="submit" class="primary-btn">Registrar venda</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-estoque" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header"><h3>Estoque</h3><span class="badge success">Inventário</span></div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Controle de itens</span>
+              <span class="mini-pill neutral">Inventário</span>
+            </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Itens em estoque</h4><div class="table-tools-right"><input class="table-search" data-kind="estoque" type="search" placeholder="Buscar itens" /><button class="export-btn" data-kind="estoque" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Estoque mínimo</th><th>Ações</th></tr></thead><tbody id="estoqueTableBody"></tbody></table></div><div class="table-footer"><span id="estoqueMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="estoque" data-action="prev">Anterior</button><span id="estoquePageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="estoque" data-action="next">Próximo</button></div></div></div>
+            <div class="secondary-form-row">
+              <form id="estoqueForm" class="register-form" data-kind="estoque" data-create-endpoint="/estoque/cadastrar" data-update-endpoint="/estoque">
+                <h4>Item de estoque</h4>
+                <input type="text" name="produto" placeholder="Produto" required />
+                <input type="text" name="categoria" placeholder="Categoria" value="geral" />
+                <input type="number" name="quantidade" placeholder="Quantidade" min="0" required />
+                <input type="number" step="0.01" name="preco_unitario" placeholder="Preço unitário" min="0" required />
+                <input type="number" name="estoque_minimo" placeholder="Estoque mínimo" min="0" value="0" />
+                <input type="text" name="unidade" placeholder="Unidade" value="unidade" />
+                <button type="submit" class="primary-btn">Salvar item</button>
+              </form>
+            </div>
+            <div class="placeholder-grid" style="margin-top: 20px;">
+              <article class="placeholder-card"><h4>Alertas</h4><p>Produtos abaixo do nível mínimo ou zerados.</p><strong id="alertaEstoqueCount">0</strong></article>
+              <article class="placeholder-card"><h4>Estoque total</h4><p>Quantidade total em inventário.</p><strong id="relatorioEstoqueTotal">0</strong></article>
+              <article class="placeholder-card"><h4>Valor em estoque</h4><p>Valor estimado do inventário atual.</p><strong id="relatorioValorEstoque">R$ 0,00</strong></article>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-produtos" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <h3>Produtos</h3>
+              <span class="badge success">Catálogo</span>
+            </div>
+            <div class="module-header-meta">
+              <span class="mini-pill">Catálogo de vendas</span>
+              <span class="mini-pill neutral">Cadastro de produtos</span>
+            </div>
+            <div class="table-card">
+              <div class="table-card-header">
+                <div class="table-card-tools">
+                  <h4>Produtos cadastrados</h4>
+                  <div class="table-tools-right">
+                    <input class="table-search" data-kind="produto" type="search" placeholder="Buscar produtos" />
+                    <button class="export-btn" data-kind="produto" type="button">Exportar CSV</button>
+                  </div>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table"><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Descrição</th><th>Preço</th><th>Unidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="produtosTableBody"></tbody></table>
+              </div>
+              <div class="table-footer">
+                <span id="produtosMeta" class="table-meta">0 registros</span>
+                <div class="pagination"><button class="page-btn" type="button" data-kind="produto" data-action="prev">Anterior</button><span id="produtosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="produto" data-action="next">Próximo</button></div>
+              </div>
+            </div>
+            <div class="secondary-form-row">
+              <form id="produtoForm" class="register-form" data-kind="produto" data-create-endpoint="/produtos/cadastrar" data-update-endpoint="/produtos">
+                <h4>Produto</h4>
+                <input type="text" name="codigo" placeholder="Código (opcional)" />
+                <input type="text" name="nome" placeholder="Nome do produto" required />
+                <input type="text" name="categoria" placeholder="Categoria" value="geral" required />
+                <input type="text" name="descricao" placeholder="Descrição (opcional)" />
+                <input type="number" name="preco" placeholder="Preço" min="0" step="0.01" required />
+                <input type="text" name="unidade" placeholder="Unidade de venda" value="unidade" required />
+                <select name="ativo" aria-label="Status do produto">
+                  <option value="true" selected>Ativo</option>
+                  <option value="false">Inativo</option>
+                </select>
+                <button type="submit" class="primary-btn">Salvar produto</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-financeiro" class="screen-panel">
+          <div class="secondary-window panel">
+            <div class="section-header">
+              <div><h3>Financeiro</h3><p class="finance-subtitle">Acompanhe o caixa, as contas e os resultados da operação.</p></div>
+              <span class="badge success">Fluxo de caixa</span>
+            </div>
+            <div class="finance-balance-grid">
+              <article class="finance-balance-card current-balance"><span>Saldo atual</span><strong id="financeCurrentBalance">R$ 0,00</strong><small>Entradas realizadas menos saídas realizadas</small></article>
+              <article class="finance-balance-card pending-balance"><span>Valores pendentes</span><strong id="financePendingTotal">R$ 0,00</strong><small>Contas a receber e a pagar ainda não realizadas</small></article>
+            </div>
+            <div class="finance-period-toolbar">
+              <label for="financeReferenceDate">Consultar períodos até</label>
+              <input id="financeReferenceDate" type="date" />
+              <button id="financeRefreshSummary" class="secondary-btn" type="button">Atualizar resumo</button>
+            </div>
+            <div class="finance-period-grid">
+              <article class="finance-period-card">
+                <h4>Resumo do dia</h4><p id="financeDayLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeDayIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeDayExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeDayReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeDayPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do dia</dt><dd id="financeDayBalance">R$ 0,00</dd></div></dl>
+              </article>
+              <article class="finance-period-card">
+                <h4>Resumo do mês</h4><p id="financeMonthLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeMonthIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeMonthExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeMonthReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeMonthPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do mês</dt><dd id="financeMonthBalance">R$ 0,00</dd></div></dl>
+              </article>
+              <article class="finance-period-card">
+                <h4>Resumo do ano</h4><p id="financeYearLabel">—</p>
+                <dl><div><dt>Entradas</dt><dd id="financeYearIncome">R$ 0,00</dd></div><div><dt>Saídas</dt><dd id="financeYearExpenses">R$ 0,00</dd></div><div><dt>A receber</dt><dd id="financeYearReceivable">R$ 0,00</dd></div><div><dt>A pagar</dt><dd id="financeYearPayable">R$ 0,00</dd></div><div class="period-net"><dt>Saldo do ano</dt><dd id="financeYearBalance">R$ 0,00</dd></div></dl>
+              </article>
+            </div>
+            <p class="finance-note">Vendas registradas no módulo Vendas são contabilizadas automaticamente como entradas. Use o status pendente para valores previstos; eles não alteram o saldo atual.</p>
+            <div class="finance-entry-grid">
+              <form id="financeMovementForm" class="register-form finance-form finance-movement">
+                <h4 data-finance-title>Entradas e Saídas · Movimentações</h4>
+                <label>Descrição
+                  <input type="text" name="descricao" maxlength="160" placeholder="Ex.: venda de mel" required />
+                </label>
+                <label>Categoria
+                  <input type="text" name="categoria" maxlength="80" placeholder="Ex.: venda, produção" required />
+                </label>
+                <label>Valor (R$)
+                  <input type="number" name="valor" min="0.01" step="0.01" placeholder="0,00" required />
+                </label>
+                <label>Data
+                  <input type="date" name="data_movimentacao" required />
+                </label>
+                <label>Forma de pagamento
+                  <select name="forma_pagamento" required>
+                    <option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao_credito">Cartão de crédito</option><option value="cartao_debito">Cartão de débito</option><option value="transferencia">Transferência</option><option value="boleto">Boleto</option><option value="outro">Outro</option>
+                  </select>
+                </label>
+                <label>Status
+                  <select name="status" required><option value="realizada">Realizada</option><option value="pendente">Pendente</option></select>
+                </label>
+                <label>Tipo de movimentação
+                  <select name="tipo" required>
+                    <option value="entrada">Entradas</option>
+                    <option value="saida">Saídas</option>
+                  </select>
+                </label>
+                <div class="finance-form-actions">
+                  <button type="submit" class="primary-btn finance-submit-button">Salvar movimentação</button>
+                  <button type="button" class="secondary-btn finance-cancel-edit" hidden>Cancelar edição</button>
+                </div>
+              </form>
+
+              <div class="table-card finance-table-card">
+                <div class="table-card-header">
+                  <div class="table-card-tools"><h4>Movimentações</h4>
+                    <div class="table-tools-right">
+                      <input id="financeFilterStart" type="date" aria-label="Data inicial" />
+                      <input id="financeFilterEnd" type="date" aria-label="Data final" />
+                      <select id="financeFilterType" aria-label="Filtrar por tipo"><option value="">Entradas e saídas</option><option value="entrada">Entradas</option><option value="saida">Saídas</option></select>
+                      <button id="financeExportCsv" class="export-btn" type="button">Exportar CSV</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table class="data-table finance-table"><thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Pagamento</th><th>Status</th><th>Valor</th><th>Origem / ações</th></tr></thead><tbody id="financeMovementsBody"></tbody></table>
+                </div>
+                <div class="table-footer"><span id="financeMovementsMeta" class="table-meta">0 movimentações</span><span class="table-meta">As vendas são editadas no módulo Vendas.</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-colmeias" class="screen-panel">
+          <div class="secondary-window panel"><div class="section-header"><h3>Colmeias</h3><span class="badge success">Monitoramento</span></div><div class="placeholder-grid"><article class="placeholder-card"><h4>Colmeias</h4><p>Cadastro, controle de produção e status das colmeias.</p></article><article class="placeholder-card"><h4>Alertas</h4><p>Monitoramento de clima, peso e indicadores de risco.</p></article></div></div>
+        </section>
+
+        <section id="screen-lotes" class="screen-panel">
+          <div class="secondary-window panel"><div class="section-header"><h3>Lotes</h3><span class="badge success">Produção</span></div><div class="placeholder-grid"><article class="placeholder-card"><h4>Rastreamento</h4><p>Controle de lote, origem e destino dos produtos.</p></article><article class="placeholder-card"><h4>Indicadores</h4><p>Desempenho por lote e produtividade atual.</p></article></div></div>
+        </section>
+
+        <section id="screen-telemetria" class="screen-panel">
+          <div class="secondary-window panel"><div class="section-header"><h3>Telemetria</h3><span class="badge success">Sensores</span></div><div class="placeholder-grid"><article class="placeholder-card"><h4>Dispositivos</h4><p>Visão do estado dos sensores e conexão.</p></article><article class="placeholder-card"><h4>Eventos</h4><p>Registro de alertas e ocorrências operacionais.</p></article></div></div>
+        </section>
+
+        <section id="screen-rastreabilidade" class="screen-panel">
+          <div class="secondary-window panel"><div class="section-header"><h3>Rastreabilidade</h3><span class="badge success">Histórico</span></div><div class="placeholder-grid"><article class="placeholder-card"><h4>Registro</h4><p>Histórico completo de origem, processamento e distribuição.</p></article><article class="placeholder-card"><h4>Traços</h4><p>Consulta por lote, produto, fornecedor e data.</p></article></div></div>
+        </section>
+
+        <div id="responseMessage" class="status-message" aria-live="polite"></div>
+      </main>
+    </div>
+
+    <script src="/static/script.js?v=finance-3"></script>
+  </body>
+</html>
