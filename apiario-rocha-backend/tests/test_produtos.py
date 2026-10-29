@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from src.auth.security import get_current_user
 from src.config.database import SQLiteDatabase, database
 from src.main import app
+from src.services.sqlite_seed import seed_sample_data
 
 
 client = TestClient(app)
@@ -78,3 +79,42 @@ def test_products_table_is_created_for_existing_database(tmp_path):
     assert produto is not None
     assert produto["nome"] == "Mel"
     assert produto["ativo"] is True
+
+
+def test_seed_sample_data_inserts_three_example_products(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "path", tmp_path / "apiario.db")
+
+    async def seed_and_count():
+        await seed_sample_data()
+        return await database.count("produtos")
+
+    count = asyncio.run(seed_and_count())
+
+    assert count == 3
+
+
+def test_seed_sample_data_populates_all_main_modules(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "path", tmp_path / "apiario.db")
+
+    async def seed_all():
+        await seed_sample_data()
+        return {
+            "empresa": await database.count("empresa"),
+            "usuarios": await database.count("usuarios"),
+            "administradores": await database.count("administradores"),
+            "funcionarios": await database.count("funcionarios"),
+            "clientes": await database.count("clientes"),
+            "fornecedores": await database.count("fornecedores"),
+            "colmeias": await database.count("colmeias"),
+            "lotes": await database.count("lotes"),
+            "produtos": await database.count("produtos"),
+            "estoque": await database.count("estoque"),
+            "vendas": await database.count("vendas"),
+            "movimentacoes_financeiras": await database.count("movimentacoes_financeiras"),
+            "telemetria": await database.count("telemetria"),
+        }
+
+    counts = asyncio.run(seed_all())
+
+    for name, count in counts.items():
+        assert count > 0, f"Módulo {name} não foi populado com exemplos"

@@ -314,21 +314,6 @@
               <span class="mini-pill">Cadastro rápido</span>
               <span class="mini-pill neutral">Permissões</span>
             </div>
-            <div class="secondary-form-row">
-              <form id="usuarioForm" class="register-form" data-kind="usuario" data-create-endpoint="/usuarios/cadastrar" data-update-endpoint="/usuarios">
-                <h4>Usuário</h4>
-                <input type="text" name="nome" placeholder="Nome" required />
-                <input type="email" name="email" placeholder="E-mail" required />
-                <input type="text" name="username" placeholder="Usuário" minlength="3" required />
-                <input type="password" name="password" placeholder="Senha (mínimo de 6 caracteres)" minlength="6" required />
-                <select name="perfil">
-                  <option value="usuario">Usuário</option>
-                  <option value="operador">Operador</option>
-                  <option value="admin">Administrador</option>
-                </select>
-                <button type="submit" class="primary-btn">Salvar usuário</button>
-              </form>
-            </div>
             <div class="table-card">
               <div class="table-card-header">
                 <div class="table-card-tools">
@@ -347,6 +332,21 @@
                 <div class="pagination"><button class="page-btn" type="button" data-kind="usuario" data-action="prev">Anterior</button><span id="usuariosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="usuario" data-action="next">Próximo</button></div>
               </div>
             </div>
+            <div class="secondary-form-row">
+              <form id="usuarioForm" class="register-form" data-kind="usuario" data-create-endpoint="/usuarios/cadastrar" data-update-endpoint="/usuarios">
+                <h4>Usuário</h4>
+                <input type="text" name="nome" placeholder="Nome" required />
+                <input type="email" name="email" placeholder="E-mail" required />
+                <input type="text" name="username" placeholder="Usuário" minlength="3" required />
+                <input type="password" name="password" placeholder="Senha (mínimo de 6 caracteres)" minlength="6" required />
+                <select name="perfil">
+                  <option value="usuario">Usuário</option>
+                  <option value="operador">Operador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+                <button type="submit" class="primary-btn">Salvar usuário</button>
+              </form>
+            </div>
           </div>
         </section>
 
@@ -357,6 +357,7 @@
               <span class="mini-pill">Acesso administrativo</span>
               <span class="mini-pill neutral">Níveis</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Administradores</h4><div class="table-tools-right"><input class="table-search" data-kind="administrador" type="search" placeholder="Buscar administradores" /><button class="export-btn" data-kind="administrador" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="administradoresTableBody"></tbody></table></div><div class="table-footer"><span id="administradoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="administrador" data-action="prev">Anterior</button><span id="administradoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="administrador" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="adminForm" class="register-form" data-kind="administrador" data-create-endpoint="/administradores/cadastrar" data-update-endpoint="/administradores">
                 <h4>Administrador</h4>
@@ -368,7 +369,6 @@
                 <button type="submit" class="primary-btn">Salvar admin</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Administradores</h4><div class="table-tools-right"><input class="table-search" data-kind="administrador" type="search" placeholder="Buscar administradores" /><button class="export-btn" data-kind="administrador" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="administradoresTableBody"></tbody></table></div><div class="table-footer"><span id="administradoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="administrador" data-action="prev">Anterior</button><span id="administradoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="administrador" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -379,6 +379,7 @@
               <span class="mini-pill">Gestão de pessoal</span>
               <span class="mini-pill neutral">Equipe</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Funcionários</h4><div class="table-tools-right"><input class="table-search" data-kind="funcionario" type="search" placeholder="Buscar funcionários" /><button class="export-btn" data-kind="funcionario" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Cargo</th><th>Departamento</th><th>Salário</th><th>Ações</th></tr></thead><tbody id="funcionariosTableBody"></tbody></table></div><div class="table-footer"><span id="funcionariosMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="funcionario" data-action="prev">Anterior</button><span id="funcionariosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="funcionario" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="funcionarioForm" class="register-form" data-kind="funcionario" data-create-endpoint="/funcionarios/cadastrar" data-update-endpoint="/funcionarios">
                 <h4>Funcionário</h4>
@@ -390,7 +391,6 @@
                 <button type="submit" class="primary-btn">Salvar funcionário</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Funcionários</h4><div class="table-tools-right"><input class="table-search" data-kind="funcionario" type="search" placeholder="Buscar funcionários" /><button class="export-btn" data-kind="funcionario" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Cargo</th><th>Departamento</th><th>Salário</th><th>Ações</th></tr></thead><tbody id="funcionariosTableBody"></tbody></table></div><div class="table-footer"><span id="funcionariosMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="funcionario" data-action="prev">Anterior</button><span id="funcionariosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="funcionario" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -401,6 +401,7 @@
               <span class="mini-pill">Cadastro de clientes</span>
               <span class="mini-pill neutral">Ativos</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Clientes cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="cliente" type="search" placeholder="Buscar clientes" /><button class="export-btn" data-kind="cliente" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="clientesTableBody"></tbody></table></div><div class="table-footer"><span id="clientesMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="cliente" data-action="prev">Anterior</button><span id="clientesPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="cliente" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="clienteForm" class="register-form" data-kind="cliente" data-create-endpoint="/clientes/cadastrar" data-update-endpoint="/clientes">
                 <h4>Cliente</h4>
@@ -417,7 +418,6 @@
                 <button type="submit" class="primary-btn">Salvar cliente</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Clientes cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="cliente" type="search" placeholder="Buscar clientes" /><button class="export-btn" data-kind="cliente" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="clientesTableBody"></tbody></table></div><div class="table-footer"><span id="clientesMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="cliente" data-action="prev">Anterior</button><span id="clientesPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="cliente" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -428,6 +428,7 @@
               <span class="mini-pill">Cadastro de fornecedores</span>
               <span class="mini-pill neutral">Suprimentos</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Fornecedores cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="fornecedor" type="search" placeholder="Buscar fornecedores" /><button class="export-btn" data-kind="fornecedor" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>CNPJ</th><th>Email</th><th>Categoria</th><th>Ações</th></tr></thead><tbody id="fornecedoresTableBody"></tbody></table></div><div class="table-footer"><span id="fornecedoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="fornecedor" data-action="prev">Anterior</button><span id="fornecedoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="fornecedor" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="fornecedorForm" class="register-form" data-kind="fornecedor" data-create-endpoint="/fornecedores/cadastrar" data-update-endpoint="/fornecedores">
                 <h4>Fornecedor</h4>
@@ -441,7 +442,6 @@
                 <button type="submit" class="primary-btn">Salvar fornecedor</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Fornecedores cadastrados</h4><div class="table-tools-right"><input class="table-search" data-kind="fornecedor" type="search" placeholder="Buscar fornecedores" /><button class="export-btn" data-kind="fornecedor" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Nome</th><th>CNPJ</th><th>Email</th><th>Categoria</th><th>Ações</th></tr></thead><tbody id="fornecedoresTableBody"></tbody></table></div><div class="table-footer"><span id="fornecedoresMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="fornecedor" data-action="prev">Anterior</button><span id="fornecedoresPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="fornecedor" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -452,6 +452,7 @@
               <span class="mini-pill">Registro de venda</span>
               <span class="mini-pill neutral">Faturamento</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Vendas</h4><div class="table-tools-right"><input class="table-search" data-kind="venda" type="search" placeholder="Buscar vendas" /><button class="export-btn" data-kind="venda" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Código</th><th>Data</th><th>Pagamento</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="vendasTableBody"></tbody></table></div><div class="table-footer"><span id="vendasMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="venda" data-action="prev">Anterior</button><span id="vendasPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="venda" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="vendaForm" class="register-form" data-kind="venda" data-create-endpoint="/vendas/registrar" data-update-endpoint="/vendas">
                 <h4>Venda</h4>
@@ -473,7 +474,6 @@
                 <button type="submit" class="primary-btn">Registrar venda</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Vendas</h4><div class="table-tools-right"><input class="table-search" data-kind="venda" type="search" placeholder="Buscar vendas" /><button class="export-btn" data-kind="venda" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Código</th><th>Data</th><th>Pagamento</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Tipo</th><th>Ações</th></tr></thead><tbody id="vendasTableBody"></tbody></table></div><div class="table-footer"><span id="vendasMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="venda" data-action="prev">Anterior</button><span id="vendasPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="venda" data-action="next">Próximo</button></div></div></div>
           </div>
         </section>
 
@@ -484,6 +484,7 @@
               <span class="mini-pill">Controle de itens</span>
               <span class="mini-pill neutral">Inventário</span>
             </div>
+            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Itens em estoque</h4><div class="table-tools-right"><input class="table-search" data-kind="estoque" type="search" placeholder="Buscar itens" /><button class="export-btn" data-kind="estoque" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Estoque mínimo</th><th>Ações</th></tr></thead><tbody id="estoqueTableBody"></tbody></table></div><div class="table-footer"><span id="estoqueMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="estoque" data-action="prev">Anterior</button><span id="estoquePageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="estoque" data-action="next">Próximo</button></div></div></div>
             <div class="secondary-form-row">
               <form id="estoqueForm" class="register-form" data-kind="estoque" data-create-endpoint="/estoque/cadastrar" data-update-endpoint="/estoque">
                 <h4>Item de estoque</h4>
@@ -496,7 +497,6 @@
                 <button type="submit" class="primary-btn">Salvar item</button>
               </form>
             </div>
-            <div class="table-card"><div class="table-card-header"><div class="table-card-tools"><h4>Itens em estoque</h4><div class="table-tools-right"><input class="table-search" data-kind="estoque" type="search" placeholder="Buscar itens" /><button class="export-btn" data-kind="estoque" type="button">Exportar CSV</button></div></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço</th><th>Estoque mínimo</th><th>Ações</th></tr></thead><tbody id="estoqueTableBody"></tbody></table></div><div class="table-footer"><span id="estoqueMeta" class="table-meta">0 registros</span><div class="pagination"><button class="page-btn" type="button" data-kind="estoque" data-action="prev">Anterior</button><span id="estoquePageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="estoque" data-action="next">Próximo</button></div></div></div>
             <div class="placeholder-grid" style="margin-top: 20px;">
               <article class="placeholder-card"><h4>Alertas</h4><p>Produtos abaixo do nível mínimo ou zerados.</p><strong id="alertaEstoqueCount">0</strong></article>
               <article class="placeholder-card"><h4>Estoque total</h4><p>Quantidade total em inventário.</p><strong id="relatorioEstoqueTotal">0</strong></article>
@@ -515,22 +515,6 @@
               <span class="mini-pill">Catálogo de vendas</span>
               <span class="mini-pill neutral">Cadastro de produtos</span>
             </div>
-            <div class="secondary-form-row">
-              <form id="produtoForm" class="register-form" data-kind="produto" data-create-endpoint="/produtos/cadastrar" data-update-endpoint="/produtos">
-                <h4>Produto</h4>
-                <input type="text" name="codigo" placeholder="Código (opcional)" />
-                <input type="text" name="nome" placeholder="Nome do produto" required />
-                <input type="text" name="categoria" placeholder="Categoria" value="geral" required />
-                <input type="text" name="descricao" placeholder="Descrição (opcional)" />
-                <input type="number" name="preco" placeholder="Preço" min="0" step="0.01" required />
-                <input type="text" name="unidade" placeholder="Unidade de venda" value="unidade" required />
-                <select name="ativo" aria-label="Status do produto">
-                  <option value="true" selected>Ativo</option>
-                  <option value="false">Inativo</option>
-                </select>
-                <button type="submit" class="primary-btn">Salvar produto</button>
-              </form>
-            </div>
             <div class="table-card">
               <div class="table-card-header">
                 <div class="table-card-tools">
@@ -548,6 +532,22 @@
                 <span id="produtosMeta" class="table-meta">0 registros</span>
                 <div class="pagination"><button class="page-btn" type="button" data-kind="produto" data-action="prev">Anterior</button><span id="produtosPageInfo" class="page-info">1/1</span><button class="page-btn" type="button" data-kind="produto" data-action="next">Próximo</button></div>
               </div>
+            </div>
+            <div class="secondary-form-row">
+              <form id="produtoForm" class="register-form" data-kind="produto" data-create-endpoint="/produtos/cadastrar" data-update-endpoint="/produtos">
+                <h4>Produto</h4>
+                <input type="text" name="codigo" placeholder="Código (opcional)" />
+                <input type="text" name="nome" placeholder="Nome do produto" required />
+                <input type="text" name="categoria" placeholder="Categoria" value="geral" required />
+                <input type="text" name="descricao" placeholder="Descrição (opcional)" />
+                <input type="number" name="preco" placeholder="Preço" min="0" step="0.01" required />
+                <input type="text" name="unidade" placeholder="Unidade de venda" value="unidade" required />
+                <select name="ativo" aria-label="Status do produto">
+                  <option value="true" selected>Ativo</option>
+                  <option value="false">Inativo</option>
+                </select>
+                <button type="submit" class="primary-btn">Salvar produto</button>
+              </form>
             </div>
           </div>
         </section>
@@ -584,7 +584,7 @@
             <p class="finance-note">Vendas registradas no módulo Vendas são contabilizadas automaticamente como entradas. Use o status pendente para valores previstos; eles não alteram o saldo atual.</p>
             <div class="finance-entry-grid">
               <form id="financeMovementForm" class="register-form finance-form finance-movement">
-                <h4 data-finance-title>Novo lançamento</h4>
+                <h4 data-finance-title>Entradas e Saídas · Movimentações</h4>
                 <label>Descrição
                   <input type="text" name="descricao" maxlength="160" placeholder="Ex.: venda de mel" required />
                 </label>
@@ -605,19 +605,18 @@
                 <label>Status
                   <select name="status" required><option value="realizada">Realizada</option><option value="pendente">Pendente</option></select>
                 </label>
-                <label>Tipo
+                <label>Tipo de movimentação
                   <select name="tipo" required>
-                    <option value="entrada">Entrada</option>
-                    <option value="saida">Saída</option>
+                    <option value="entrada">Entradas</option>
+                    <option value="saida">Saídas</option>
                   </select>
                 </label>
                 <div class="finance-form-actions">
-                  <button type="submit" class="primary-btn finance-submit-button">Salvar lançamento</button>
+                  <button type="submit" class="primary-btn finance-submit-button">Salvar movimentação</button>
                   <button type="button" class="secondary-btn finance-cancel-edit" hidden>Cancelar edição</button>
                 </div>
               </form>
-            </div>
-            <div class="finance-workspace">
+
               <div class="table-card finance-table-card">
                 <div class="table-card-header">
                   <div class="table-card-tools"><h4>Movimentações</h4>

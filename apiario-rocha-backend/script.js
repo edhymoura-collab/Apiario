@@ -592,35 +592,39 @@ function syncCompanyProfileForm() {
   });
 }
 
+function setBrandMarkImage(brandMark, companyName, logoUrl) {
+  if (!brandMark) return;
+
+  const finalCompanyName = companyName || defaultBrandConfig.companyName;
+  const fallbackLogo = buildCompanyLogoDataUrl(finalCompanyName);
+  const resolvedUrl = (logoUrl && String(logoUrl).trim()) || fallbackLogo;
+
+  brandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
+  brandMark.style.padding = '0';
+  brandMark.style.overflow = 'hidden';
+  brandMark.style.background = 'transparent';
+  brandMark.style.boxShadow = 'none';
+  brandMark.style.border = 'none';
+}
+
 function setLogoPreviewFromUrl(url) {
   const previewBox = document.getElementById('logoPreviewBox');
   const companyName = getStoredBrandConfig().companyName || defaultBrandConfig.companyName;
   const fallbackLogo = buildCompanyLogoDataUrl(companyName);
-  const resolvedUrl = url || fallbackLogo;
+  const resolvedUrl = (url && String(url).trim()) || fallbackLogo;
 
   if (previewBox) {
     previewBox.innerHTML = `<img src="${resolvedUrl}" alt="Pré-visualização da logo da empresa" />`;
   }
 
   const dashboardBrandMark = document.getElementById('dashboardBrandMark');
-  if (dashboardBrandMark) {
-    dashboardBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
-    dashboardBrandMark.style.padding = '0';
-    dashboardBrandMark.style.overflow = 'hidden';
-    dashboardBrandMark.style.background = 'transparent';
-    dashboardBrandMark.style.boxShadow = 'none';
-    dashboardBrandMark.style.border = 'none';
-  }
-
   const topbarBrandMark = document.getElementById('topbarBrandMark');
-  if (topbarBrandMark) {
-    topbarBrandMark.innerHTML = `<img src="${resolvedUrl}" alt="Logo da empresa" />`;
-    topbarBrandMark.style.padding = '0';
-    topbarBrandMark.style.overflow = 'hidden';
-    topbarBrandMark.style.background = 'transparent';
-    topbarBrandMark.style.boxShadow = 'none';
-    topbarBrandMark.style.border = 'none';
-  }
+  setBrandMarkImage(dashboardBrandMark, companyName, resolvedUrl);
+  setBrandMarkImage(topbarBrandMark, companyName, resolvedUrl);
+
+  document.querySelectorAll('.login-header .brand-mark').forEach((brandMark) => {
+    setBrandMarkImage(brandMark, companyName, resolvedUrl);
+  });
 }
 
 async function loadCompanyProfileFromApi() {
@@ -705,6 +709,7 @@ function applyBrandConfig(brandConfig = getStoredBrandConfig()) {
   const companyName = brandConfig.companyName || defaultBrandConfig.companyName;
   const acronym = (brandConfig.companyAcronym || companyName.slice(0, 2).toUpperCase() || defaultBrandConfig.companyAcronym).slice(0, 4);
   const logoUrl = getStoredCompanyProfile().logoUrl;
+  const resolvedLogoUrl = (logoUrl && String(logoUrl).trim()) || buildCompanyLogoDataUrl(companyName);
 
   const dashboardBrandMark = document.getElementById('dashboardBrandMark');
   const topbarBrandMark = document.getElementById('topbarBrandMark');
@@ -713,23 +718,11 @@ function applyBrandConfig(brandConfig = getStoredBrandConfig()) {
   const dashboardNameNode = document.getElementById('dashboardBrandCompanyName');
 
   [dashboardBrandMark, topbarBrandMark].forEach((brandMark) => {
-    if (!brandMark) return;
+    setBrandMarkImage(brandMark, companyName, resolvedLogoUrl);
+  });
 
-    const fallbackLogo = buildCompanyLogoDataUrl(companyName);
-    const resolvedLogoUrl = logoUrl || fallbackLogo;
-    brandMark.innerHTML = `<img src="${resolvedLogoUrl}" alt="Logo da empresa" />`;
-    brandMark.style.padding = '0';
-    brandMark.style.overflow = 'hidden';
-    brandMark.style.background = 'transparent';
-    brandMark.style.boxShadow = 'none';
-    brandMark.style.border = 'none';
-    const img = brandMark.querySelector('img');
-    if (img) {
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
-      img.style.display = 'block';
-    }
+  document.querySelectorAll('.login-header .brand-mark').forEach((brandMark) => {
+    setBrandMarkImage(brandMark, companyName, resolvedLogoUrl);
   });
 
   if (nameNode) nameNode.textContent = companyName;
@@ -1420,8 +1413,8 @@ function resetFinanceForm(form = null) {
     currentForm.dataset.editId = '';
     currentForm.elements.namedItem('data_movimentacao').value = localDateInputValue();
     currentForm.elements.namedItem('tipo').value = 'entrada';
-    currentForm.querySelector('[data-finance-title]').textContent = 'Novo lançamento';
-    currentForm.querySelector('.finance-submit-button').textContent = 'Salvar lançamento';
+    currentForm.querySelector('[data-finance-title]').textContent = 'Entradas e Saídas · Movimentações';
+    currentForm.querySelector('.finance-submit-button').textContent = 'Salvar movimentação';
     currentForm.querySelector('.finance-cancel-edit').hidden = true;
   });
 }
@@ -1690,7 +1683,7 @@ document.getElementById('newRegisterBtn')?.addEventListener('click', () => {
   if (targetScreen === 'financeiro') {
     resetFinanceForm();
     document.querySelector('.finance-entry-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    showMessage('Formulários de entrada e saída prontos para lançamento.', 'success');
+    showMessage('Formulários de entradas e saídas prontos para movimentações.', 'success');
     return;
   }
 
@@ -1907,7 +1900,7 @@ document.querySelectorAll('.finance-form').forEach((form) => {
 
     try {
       await requestJson(endpoint, isEdit ? 'PUT' : 'POST', payload);
-      showMessage(`${payload.tipo === 'entrada' ? 'Entrada' : 'Saída'} ${isEdit ? 'atualizada' : 'registrada'} com sucesso.`, 'success');
+      showMessage(`${isEdit ? 'Movimentação atualizada' : 'Movimentação registrada'} com sucesso.`, 'success');
       resetFinanceForm(form);
       await refreshFinance();
     } catch (error) {

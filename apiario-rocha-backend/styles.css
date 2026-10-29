@@ -109,9 +109,10 @@ button {
 
 .brand-copy h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.7rem);
   line-height: 1.2;
   color: var(--gray-900);
+  letter-spacing: -0.04em;
 }
 
 .topbar-branding {
@@ -119,6 +120,12 @@ button {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .topbar-summary {
@@ -130,14 +137,14 @@ button {
 }
 
 .brand-mark {
-  width: 70px;
-  height: 70px;
-  border-radius: 18px;
+  width: 74px;
+  height: 74px;
+  border-radius: 20px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, var(--green-700), var(--blue-700));
-  border: 2px solid rgba(255,255,255,0.45);
-  box-shadow: 0 10px 24px rgba(46, 141, 104, 0.18), 0 0 0 6px rgba(92, 166, 220, 0.06);
+  border: 2px solid rgba(255,255,255,0.52);
+  box-shadow: 0 14px 28px rgba(46, 141, 104, 0.16), 0 0 0 7px rgba(92, 166, 220, 0.06);
   color: var(--white);
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -236,7 +243,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 8px 0;
+  padding: 18px 8px 0;
 }
 
 .module-tabs {
@@ -280,7 +287,9 @@ button {
 }
 
 .topbar h2 {
-  font-size: clamp(1.8rem, 2vw, 2.5rem);
+  font-size: clamp(1.7rem, 1.9vw, 2.2rem);
+  letter-spacing: -0.04em;
+  color: var(--gray-900);
 }
 
 .login-modal {
@@ -335,10 +344,10 @@ button {
 }
 
 .login-header .brand-mark {
-  width: 88px;
-  height: 88px;
+  width: 92px;
+  height: 92px;
   border-radius: 26px;
-  box-shadow: 0 18px 36px rgba(46, 141, 104, 0.18), 0 0 0 10px rgba(92, 166, 220, 0.08);
+  box-shadow: 0 20px 38px rgba(46, 141, 104, 0.18), 0 0 0 10px rgba(92, 166, 220, 0.08);
 }
 
 .login-header h2 {
