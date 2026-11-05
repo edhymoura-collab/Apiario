@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
 
 class Settings(BaseSettings):
     app_name: str = "Sistema de Gestão"
@@ -30,7 +32,7 @@ class Settings(BaseSettings):
     admin_password: str | None = None
 
     class Config:
-        env_file = ".env"
+        env_file = str(BACKEND_ROOT / ".env")
         case_sensitive = False
 
 

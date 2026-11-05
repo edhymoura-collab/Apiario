@@ -1,0 +1,16 @@
+[Unit]
+Description=Apiario Rocha FastAPI
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/apiario-rocha-backend
+Environment="PATH=/home/ubuntu/apiario-rocha-backend/.venv/bin"
+EnvironmentFile=/home/ubuntu/apiario-rocha-backend/.env
+ExecStart=/home/ubuntu/apiario-rocha-backend/.venv/bin/uvicorn src.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

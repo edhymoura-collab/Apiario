@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 from jose import jwt
 
@@ -175,6 +177,33 @@ def test_financeiro_root_alias_returns_summary(monkeypatch):
     assert data["usuario"] == "admin"
     assert data["total_vendas"] == 42
     assert data["fundo_acumulado"] == 3500
+
+
+def test_get_settings_reads_env_from_backend_root_even_if_cwd_changes(monkeypatch, tmp_path):
+    from src.config import settings as settings_module
+
+    for env_name in (
+        "APP_NAME",
+        "COMPANY_NAME",
+        "SQLITE_PATH",
+        "SECRET_KEY",
+        "ALGORITHM",
+        "ACCESS_TOKEN_EXPIRE_MINUTES",
+        "ADMIN_USERNAME",
+        "ADMIN_PASSWORD",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
+
+    monkeypatch.chdir(tmp_path)
+    settings_module.get_settings.cache_clear()
+
+    settings = settings_module.get_settings()
+
+    assert settings.app_name == "Apiário Rocha 4.0"
+    assert settings.company_name == "Apiário Rocha"
+    assert settings.secret_key == "apiario-rocha-secret-key-2026-strong-value"
+    assert settings.admin_username == "admin"
+    assert settings.sqlite_path == Path("../data/apiario.db")
 
 
 def test_listar_vendas_fallback_quando_banco_falha(monkeypatch):
