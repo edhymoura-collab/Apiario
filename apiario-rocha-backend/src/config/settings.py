@@ -2,14 +2,14 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    app_name: str = "Sistema de Gestão"
-    company_name: str = "Empresa"
+    app_name: str = "Apiário Rocha 4.0"
+    company_name: str = "Apiário Rocha"
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://127.0.0.1:8081",
@@ -31,9 +31,10 @@ class Settings(BaseSettings):
     admin_username: str | None = None
     admin_password: str | None = None
 
-    class Config:
-        env_file = str(BACKEND_ROOT / ".env")
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=str(BACKEND_ROOT / ".env"),
+        case_sensitive=False,
+    )
 
 
 @lru_cache()
