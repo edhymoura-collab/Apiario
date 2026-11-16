@@ -25,13 +25,15 @@ from src.services.sqlite_seed import seed_sample_data
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_DATABASE_PATH = database.path
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await database.initialize()
     print(f"SQLite conectado: {database.path}")
-    await seed_sample_data()
+    if database.path == DEFAULT_DATABASE_PATH:
+        await seed_sample_data()
     yield
 
 

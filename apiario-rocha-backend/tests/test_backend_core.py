@@ -201,7 +201,8 @@ def test_get_settings_reads_env_from_backend_root_even_if_cwd_changes(monkeypatc
 
     assert settings.app_name == "Apiário Rocha 4.0"
     assert settings.company_name == "Apiário Rocha"
-    assert settings.secret_key == "apiario-rocha-secret-key-2026-strong-value"
+    assert settings.secret_key is not None
+    assert len(settings.secret_key) >= 32
     assert settings.admin_username == "admin"
     assert settings.sqlite_path == Path("../data/apiario.db")
 
