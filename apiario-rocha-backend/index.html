@@ -7,9 +7,44 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css?v=finance-3" />
+    <link rel="stylesheet" href="/static/styles.css?v=landing-1" />
   </head>
   <body>
+    <section id="landingScreen" class="landing-screen" aria-labelledby="landingTitle">
+      <div class="landing-orbit landing-orbit-one" aria-hidden="true"></div>
+      <div class="landing-orbit landing-orbit-two" aria-hidden="true"></div>
+      <div class="landing-honeycomb" aria-hidden="true">
+        <span class="honeycomb-cell cell-one"></span>
+        <span class="honeycomb-cell cell-two"></span>
+        <span class="honeycomb-cell cell-three"></span>
+        <span class="honeycomb-cell cell-four"></span>
+        <span class="honeycomb-cell cell-five"></span>
+      </div>
+      <div class="landing-bee bee-one" aria-hidden="true">🐝</div>
+      <div class="landing-bee bee-two" aria-hidden="true">🐝</div>
+      <div class="landing-content">
+        <div class="landing-mark" aria-hidden="true"><span>AR</span></div>
+        <p class="landing-kicker">Apiário Rocha</p>
+        <h1 id="landingTitle">Onde cada <span>colmeia</span> conta.</h1>
+        <p class="landing-description">
+          Gestão simples, inteligente e conectada para cuidar do seu apiário em todos os detalhes.
+        </p>
+        <div class="landing-product-shot">
+          <img src="/static/assets/rotulo_apiario_rocha_v2.png" alt="Rótulo e pote de mel Apiário Rocha" />
+        </div>
+        <button id="landingEnterBtn" class="landing-enter-btn" type="button">
+          <span>Acessar o sistema</span>
+          <kbd>Enter</kbd>
+        </button>
+        <p class="landing-hint">Pressione Enter para continuar</p>
+      </div>
+      <div class="landing-footer">
+        <span>GESTÃO APÍCOLA</span>
+        <span class="landing-footer-line"></span>
+        <span>PRODUÇÃO &middot; CUIDADO &middot; RESULTADO</span>
+      </div>
+    </section>
+
     <dialog id="loginDialog" class="auth-dialog" aria-labelledby="loginTitle">
       <form id="loginForm" class="register-form">
         <h2 id="loginTitle">Acesso ao sistema</h2>
@@ -657,6 +692,6 @@
       </main>
     </div>
 
-    <script src="/static/script.js?v=finance-3"></script>
+    <script src="/static/script.js?v=landing-1"></script>
   </body>
 </html>

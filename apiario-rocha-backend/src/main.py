@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
@@ -26,6 +26,10 @@ from src.services.sqlite_seed import seed_sample_data
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_DATABASE_PATH = database.path
+ASSET_FILES = {
+    "casa_de_mel_antiga.png": BASE_DIR / "assets" / "casa_de_mel_antiga.png",
+    "rotulo_apiario_rocha_v2.png": BASE_DIR / "assets" / "rotulo_apiario_rocha_v2.png",
+}
 
 
 @asynccontextmanager
@@ -66,6 +70,14 @@ async def serve_stylesheet():
 @app.get("/static/script.js", include_in_schema=False)
 async def serve_script():
     return FileResponse(BASE_DIR / "script.js", media_type="text/javascript")
+
+
+@app.get("/static/assets/{asset_name}", include_in_schema=False)
+async def serve_asset(asset_name: str):
+    asset_path = ASSET_FILES.get(asset_name)
+    if not asset_path or not asset_path.is_file():
+        raise HTTPException(status_code=404, detail="Asset não encontrado.")
+    return FileResponse(asset_path)
 
 
 @app.get("/health")

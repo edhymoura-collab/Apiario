@@ -451,6 +451,13 @@ async function requestLogin(username, password) {
 }
 
 function showLoginModal() {
+  const loginDialog = document.getElementById('loginDialog');
+  if (loginDialog && !loginDialog.open) {
+    loginDialog.showModal();
+    window.setTimeout(() => loginDialog.querySelector('input')?.focus(), 0);
+    return;
+  }
+
   const modal = document.getElementById('loginModal');
   if (modal) {
     modal.classList.add('visible');
@@ -464,6 +471,25 @@ function hideLoginModal() {
   }
 }
 
+function leaveLandingScreen() {
+  const landingScreen = document.getElementById('landingScreen');
+  if (!landingScreen || landingScreen.classList.contains('is-hidden')) return;
+
+  landingScreen.classList.add('is-hidden');
+  window.setTimeout(() => landingScreen.remove(), 500);
+  showLoginModal();
+}
+
+document.getElementById('landingEnterBtn')?.addEventListener('click', leaveLandingScreen);
+
+document.addEventListener('keydown', (event) => {
+  const landingScreen = document.getElementById('landingScreen');
+  if (landingScreen && !landingScreen.classList.contains('is-hidden') && event.key === 'Enter') {
+    event.preventDefault();
+    leaveLandingScreen();
+  }
+});
+
 function getAdminToken() {
   const token = localStorage.getItem('api_token');
   if (token) return token;
@@ -475,9 +501,12 @@ function getAdminToken() {
     throw new Error('O formulário de autenticação não está disponível.');
   }
 
-  if (loginDialog) {
+  const landingScreen = document.getElementById('landingScreen');
+  const landingIsVisible = landingScreen && !landingScreen.classList.contains('is-hidden');
+
+  if (loginDialog && !landingIsVisible) {
     loginDialog.showModal();
-  } else if (loginModal) {
+  } else if (loginModal && !landingIsVisible) {
     showLoginModal();
   }
 
@@ -1602,16 +1631,27 @@ function initializeApp() {
   updateSystemStatus('neutral', 'Conectando...');
 
   return (async () => {
+    const landingScreen = document.getElementById('landingScreen');
+    const hasStoredToken = Boolean(localStorage.getItem('api_token'));
+    if (hasStoredToken && landingScreen) {
+      landingScreen.classList.add('is-hidden');
+      window.setTimeout(() => landingScreen.remove(), 500);
+    }
+
     const backendIsOnline = await checkBackendHealth();
 
     if (!backendIsOnline) {
-      showLoginModal();
+      if (!hasStoredToken && (!landingScreen || landingScreen.classList.contains('is-hidden'))) {
+        showLoginModal();
+      }
       showMessage('Servidor indisponível; usando dados de demonstração.', 'error');
       return;
     }
 
-    if (!localStorage.getItem('api_token')) {
-      showLoginModal();
+    if (!hasStoredToken) {
+      if (!landingScreen || landingScreen.classList.contains('is-hidden')) {
+        showLoginModal();
+      }
       showMessage('Faça login para acessar o sistema.', 'success');
       return;
     }

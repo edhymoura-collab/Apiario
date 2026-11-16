@@ -31,6 +31,221 @@ body {
   color: var(--gray-900);
 }
 
+.landing-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fffaf0;
+  background:
+    linear-gradient(90deg, rgba(10, 38, 35, 0.96) 0%, rgba(10, 38, 35, 0.86) 42%, rgba(10, 38, 35, 0.4) 100%),
+    url("/static/assets/casa_de_mel_antiga.png") center / cover no-repeat;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.landing-screen.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 2;
+  width: min(660px, calc(100% - 40px));
+  text-align: center;
+  animation: landing-rise 0.8s ease both;
+}
+
+.landing-mark {
+  width: 76px;
+  height: 88px;
+  margin: 0 auto 22px;
+  display: grid;
+  place-items: center;
+  clip-path: polygon(25% 7%, 75% 7%, 100% 50%, 75% 93%, 25% 93%, 0 50%);
+  background: linear-gradient(145deg, #f8cf52, #df9b22);
+  color: #173d35;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 18px 40px rgba(245, 190, 53, 0.2);
+}
+
+.landing-kicker {
+  margin: 0 0 14px;
+  color: #f2c550;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.landing-content h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 5.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.07em;
+}
+
+.landing-content h1 span {
+  color: #f2c550;
+}
+
+.landing-description {
+  max-width: 470px;
+  margin: 26px auto 32px;
+  color: rgba(255, 250, 240, 0.72);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.landing-product-shot {
+  width: min(440px, 82vw);
+  height: 110px;
+  margin: 0 auto 24px;
+  overflow: hidden;
+  border: 2px solid rgba(242, 197, 80, 0.58);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.92);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+  transform: rotate(-1deg);
+}
+
+.landing-product-shot img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 42%;
+}
+
+.landing-enter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 10px 8px 24px;
+  background: #f2c550;
+  color: #173d35;
+  font-weight: 800;
+  box-shadow: 0 14px 30px rgba(242, 197, 80, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-enter-btn:hover,
+.landing-enter-btn:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 34px rgba(242, 197, 80, 0.32);
+}
+
+.landing-enter-btn kbd {
+  min-width: 34px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: rgba(23, 61, 53, 0.14);
+  font-size: 0.75rem;
+  font-family: inherit;
+}
+
+.landing-hint {
+  margin: 18px 0 0;
+  color: rgba(255, 250, 240, 0.45);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-honeycomb {
+  position: absolute;
+  top: 50%;
+  right: -80px;
+  width: 400px;
+  height: 430px;
+  transform: translateY(-50%) rotate(18deg);
+  opacity: 0.12;
+}
+
+.honeycomb-cell {
+  position: absolute;
+  width: 150px;
+  height: 174px;
+  clip-path: polygon(25% 0, 75% 0, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0 75%, 0 25%);
+  border: 2px solid #f2c550;
+  background: rgba(242, 197, 80, 0.08);
+}
+
+.cell-one { top: 0; left: 110px; }
+.cell-two { top: 128px; left: 25px; }
+.cell-three { top: 128px; left: 195px; }
+.cell-four { top: 256px; left: 110px; }
+.cell-five { top: 256px; left: 280px; }
+
+.landing-orbit {
+  position: absolute;
+  border: 1px solid rgba(242, 197, 80, 0.16);
+  border-radius: 50%;
+}
+
+.landing-orbit-one {
+  width: 620px;
+  height: 620px;
+  top: -300px;
+  left: -250px;
+}
+
+.landing-orbit-two {
+  width: 380px;
+  height: 380px;
+  right: 12%;
+  bottom: -240px;
+}
+
+.landing-bee {
+  position: absolute;
+  z-index: 1;
+  font-size: 2rem;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.2));
+  animation: bee-float 5s ease-in-out infinite;
+}
+
+.bee-one { top: 23%; left: 17%; }
+.bee-two { right: 18%; bottom: 23%; animation-delay: -2s; font-size: 1.5rem; }
+
+.landing-footer {
+  position: absolute;
+  right: 32px;
+  bottom: 28px;
+  left: 32px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: rgba(255, 250, 240, 0.42);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.landing-footer-line {
+  width: 34px;
+  height: 1px;
+  background: #f2c550;
+}
+
+@keyframes landing-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bee-float {
+  0%, 100% { transform: translate(0, 0) rotate(-8deg); }
+  50% { transform: translate(12px, -16px) rotate(5deg); }
+}
+
 button {
   font: inherit;
   cursor: pointer;
@@ -1484,6 +1699,24 @@ button {
 }
 
 @media (max-width: 560px) {
+  .landing-honeycomb {
+    right: -190px;
+    opacity: 0.1;
+  }
+
+  .landing-content h1 {
+    font-size: clamp(2.4rem, 13vw, 4rem);
+  }
+
+  .landing-footer {
+    justify-content: center;
+    font-size: 0.52rem;
+  }
+
+  .landing-footer span:last-child {
+    display: none;
+  }
+
   .summary-grid,
   .action-grid,
   .finance-balance-grid,
