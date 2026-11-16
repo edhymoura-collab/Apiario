@@ -214,6 +214,14 @@ body {
 
 .bee-one { top: 23%; left: 17%; }
 .bee-two { right: 18%; bottom: 23%; animation-delay: -2s; font-size: 1.5rem; }
+.bee-three { top: 12%; left: 42%; animation-delay: -1s; font-size: 1.3rem; }
+.bee-four { top: 34%; right: 8%; animation-delay: -3.2s; font-size: 1.25rem; }
+.bee-five { top: 62%; left: 9%; animation-delay: -4s; font-size: 1.55rem; }
+.bee-six { top: 76%; left: 30%; animation-delay: -0.5s; font-size: 1.15rem; }
+.bee-seven { top: 16%; right: 27%; animation-delay: -2.6s; font-size: 1rem; }
+.bee-eight { bottom: 12%; right: 9%; animation-delay: -1.7s; font-size: 1.4rem; }
+.bee-nine { top: 48%; left: 4%; animation-delay: -3.8s; font-size: 0.95rem; }
+.bee-ten { bottom: 7%; left: 53%; animation-delay: -4.7s; font-size: 1.1rem; }
 
 .landing-footer {
   position: absolute;
